@@ -6,7 +6,8 @@ const eventConfig = {
   adminEmails: [
     'admin@innovatorsarena.com',
     'organizer@innovatorsarena.com',
-    // Add more admin emails as needed
+    'contact11induskiller@gmail.com',
+    'aravindmuthiah23@gmail.com',
   ],
 
   // Event details
