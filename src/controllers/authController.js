@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const validator = require('validator');
 const firebaseAdmin = require('firebase-admin');
-const { eventConfig } = require('../config/eventConfig');
+const eventConfig = require('../config/eventConfig');
 
 // Get Firebase Realtime Database reference
 const db = firebaseAdmin.database();
