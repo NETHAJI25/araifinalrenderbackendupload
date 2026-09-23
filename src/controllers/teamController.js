@@ -601,3 +601,62 @@ exports.rejectTeam = async (req, res) => {
     });
   }
 };
+
+/**
+ * Update team round (admin only)
+ */
+exports.updateTeamRound = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { round } = req.body;
+
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.'
+      });
+    }
+
+    // Validate round
+    if (![1, 2].includes(round)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid round. Must be 1 or 2.'
+      });
+    }
+
+    // Get team
+    const teamSnapshot = await teamsRef.child(teamId).once('value');
+    if (!teamSnapshot.exists()) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found'
+      });
+    }
+
+    const team = teamSnapshot.val();
+
+    // Update team round
+    const updatedTeam = {
+      ...team,
+      round: round,
+      updatedAt: new Date().toISOString()
+    };
+
+    // Save updated team
+    await teamsRef.child(teamId).set(updatedTeam);
+
+    res.status(200).json({
+      success: true,
+      message: `Team promoted to Round ${round} successfully`,
+      data: updatedTeam
+    });
+  } catch (error) {
+    console.error('Update team round error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during team round update'
+    });
+  }
+};

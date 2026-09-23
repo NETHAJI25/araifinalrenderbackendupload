@@ -16,5 +16,6 @@ router.put('/:teamId/problem-statement', authenticate, authorizeTeamLeader, team
 router.delete('/:teamId/leave', authenticate, teamController.leaveTeam);
 router.post('/:teamId/complete', authenticate, authorizeTeamLeader, teamController.markTeamComplete);
 router.post('/:teamId/reject', authenticate, teamController.rejectTeam); // Admin only
+router.put('/:teamId/round', authenticate, teamController.updateTeamRound); // Admin only
 
 module.exports = router;
