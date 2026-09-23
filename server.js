@@ -75,6 +75,7 @@ app.use('/api/teams', require('./src/routes/teamRoutes'));
 app.use('/api/announcements', require('./src/routes/announcementRoutes'));
 app.use('/api/payments', require('./src/routes/paymentRoutes'));
 app.use('/api/submissions', require('./src/routes/submissionRoutes'));
+app.use('/api/contact', require('./src/routes/contactRoutes'));
 
 // 404 handler
 app.use('*', (req, res) => {
