@@ -16,13 +16,23 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://innovators-arena-tau.vercel.app',
-    'https://innovators-arena-3ybl916i1-contact11induskiller-2418s-projects.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://innovators-arena-tau.vercel.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    // Allow any Vercel preview deployment for this project
+    const vercelPreviewRegex = /^https:\/\/innovators-arena-[a-z0-9-]+\.vercel\.app$/;
+    
+    if (!origin || allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());

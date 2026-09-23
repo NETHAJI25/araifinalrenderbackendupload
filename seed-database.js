@@ -160,6 +160,38 @@ try {
       await faqRef.set(sampleFaqs);
       console.log('✅ FAQs added');
 
+      // 6. Add sample announcements
+      const announcementsRef = ref.child('announcements');
+      const sampleAnnouncements = [
+        {
+          title: 'Welcome to Innovators Arena 2.0!',
+          content: 'Registration is now open. Form your teams and start building!',
+          priority: 'Important',
+          status: 'published',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString(),
+        },
+        {
+          title: 'Problem Statements Released',
+          content: 'The official problem statements from our sponsors are now available in the dashboard.',
+          priority: 'Normal',
+          status: 'published',
+          createdAt: new Date(Date.now() - 43200000).toISOString(),
+          updatedAt: new Date(Date.now() - 43200000).toISOString(),
+        },
+        {
+          title: 'Round 1 Submission Deadline Extended',
+          content: 'The deadline for Round 1 PPT submissions has been extended by 48 hours. New deadline: January 15, 2027.',
+          priority: 'Urgent',
+          status: 'published',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      ];
+
+      await announcementsRef.set(sampleAnnouncements);
+      console.log('✅ Announcements added');
+
       console.log('\n🎉 Database seeded successfully!');
       console.log('You can now view data in Firebase Console at:', process.env.FIREBASE_DATABASE_URL);
       
