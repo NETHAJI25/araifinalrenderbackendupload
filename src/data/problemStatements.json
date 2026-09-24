@@ -1,0 +1,2162 @@
+[
+  {
+    "id": "IA26001",
+    "localPsNumber": "IA26001",
+    "sourcePsId": "SIH26001",
+    "serialNo": 1,
+    "title": "AI-Based Adaptive Learning Platform for Rural Students",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26002",
+    "localPsNumber": "IA26002",
+    "sourcePsId": "SIH26002",
+    "serialNo": 2,
+    "title": "Automated Attendance System Using Facial Recognition in Classrooms",
+    "category": "Hardware",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26003",
+    "localPsNumber": "IA26003",
+    "sourcePsId": "SIH26003",
+    "serialNo": 3,
+    "title": "Multilingual Smart Tutoring System for Government School Students",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26004",
+    "localPsNumber": "IA26004",
+    "sourcePsId": "SIH26004",
+    "serialNo": 4,
+    "title": "Digital Library Access Platform for Underprivileged Students",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26005",
+    "localPsNumber": "IA26005",
+    "sourcePsId": "SIH26005",
+    "serialNo": 5,
+    "title": "Gamified Skill Assessment Tool for Vocational Education",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26006",
+    "localPsNumber": "IA26006",
+    "sourcePsId": "SIH26006",
+    "serialNo": 6,
+    "title": "Smart Campus Resource Booking and Utilization System",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26007",
+    "localPsNumber": "IA26007",
+    "sourcePsId": "SIH26007",
+    "serialNo": 7,
+    "title": "AR/VR-Based Science Lab Simulation for Remote Schools",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26008",
+    "localPsNumber": "IA26008",
+    "sourcePsId": "SIH26008",
+    "serialNo": 8,
+    "title": "Plagiarism Detection System for Regional Language Content",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26009",
+    "localPsNumber": "IA26009",
+    "sourcePsId": "SIH26009",
+    "serialNo": 9,
+    "title": "AI-Powered Career Guidance Portal for Class 12 Students",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26010",
+    "localPsNumber": "IA26010",
+    "sourcePsId": "SIH26010",
+    "serialNo": 10,
+    "title": "Smart Timetable Generator for Universities Using ML",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26011",
+    "localPsNumber": "IA26011",
+    "sourcePsId": "SIH26011",
+    "serialNo": 11,
+    "title": "Peer-to-Peer Tutoring Marketplace for College Students",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26012",
+    "localPsNumber": "IA26012",
+    "sourcePsId": "SIH26012",
+    "serialNo": 12,
+    "title": "IoT-Based Smart Classroom Energy Management System",
+    "category": "Hardware",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26013",
+    "localPsNumber": "IA26013",
+    "sourcePsId": "SIH26013",
+    "serialNo": 13,
+    "title": "Automated Exam Paper Generation Using AI",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26014",
+    "localPsNumber": "IA26014",
+    "sourcePsId": "SIH26014",
+    "serialNo": 14,
+    "title": "Student Mental Health Monitoring Dashboard for Institutions",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26015",
+    "localPsNumber": "IA26015",
+    "sourcePsId": "SIH26015",
+    "serialNo": 15,
+    "title": "Sign Language Interpreter for Hearing-Impaired Students",
+    "category": "Software",
+    "theme": "Smart Education"
+  },
+  {
+    "id": "IA26016",
+    "localPsNumber": "IA26016",
+    "sourcePsId": "SIH26016",
+    "serialNo": 16,
+    "title": "AI-Based Early Detection System for Diabetic Retinopathy",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26017",
+    "localPsNumber": "IA26017",
+    "sourcePsId": "SIH26017",
+    "serialNo": 17,
+    "title": "Remote Patient Monitoring Wearable for Rural Healthcare",
+    "category": "Hardware",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26018",
+    "localPsNumber": "IA26018",
+    "sourcePsId": "SIH26018",
+    "serialNo": 18,
+    "title": "Drug Interaction Alert System for Pharmacists",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26019",
+    "localPsNumber": "IA26019",
+    "sourcePsId": "SIH26019",
+    "serialNo": 19,
+    "title": "Smart Ambulance Routing System with Real-Time Traffic Integration",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26020",
+    "localPsNumber": "IA26020",
+    "sourcePsId": "SIH26020",
+    "serialNo": 20,
+    "title": "Telemedicine Platform for Tribal and Remote Areas",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26021",
+    "localPsNumber": "IA26021",
+    "sourcePsId": "SIH26021",
+    "serialNo": 21,
+    "title": "AI-Powered Mental Health Companion App for Youth",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26022",
+    "localPsNumber": "IA26022",
+    "sourcePsId": "SIH26022",
+    "serialNo": 22,
+    "title": "Decentralized Patient Health Record System",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26023",
+    "localPsNumber": "IA26023",
+    "sourcePsId": "SIH26023",
+    "serialNo": 23,
+    "title": "Portable Low-Cost ECG Monitor for Village Health Workers",
+    "category": "Hardware",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26024",
+    "localPsNumber": "IA26024",
+    "sourcePsId": "SIH26024",
+    "serialNo": 24,
+    "title": "Blood Bank Inventory Management and Donor Tracking System",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26025",
+    "localPsNumber": "IA26025",
+    "sourcePsId": "SIH26025",
+    "serialNo": 25,
+    "title": "Postoperative Recovery Monitoring Using IoT Wearables",
+    "category": "Hardware",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26026",
+    "localPsNumber": "IA26026",
+    "sourcePsId": "SIH26026",
+    "serialNo": 26,
+    "title": "AI-Based Skin Disease Detection via Smartphone Camera",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26027",
+    "localPsNumber": "IA26027",
+    "sourcePsId": "SIH26027",
+    "serialNo": 27,
+    "title": "Hospital Bed Occupancy and Patient Queue Management",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26028",
+    "localPsNumber": "IA26028",
+    "sourcePsId": "SIH26028",
+    "serialNo": 28,
+    "title": "Maternal and Child Health Tracking Application",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26029",
+    "localPsNumber": "IA26029",
+    "sourcePsId": "SIH26029",
+    "serialNo": 29,
+    "title": "Smart Pill Dispenser with Automated Reminder System",
+    "category": "Hardware",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26030",
+    "localPsNumber": "IA26030",
+    "sourcePsId": "SIH26030",
+    "serialNo": 30,
+    "title": "AI Triage Assistant for Emergency Departments",
+    "category": "Software",
+    "theme": "Healthcare"
+  },
+  {
+    "id": "IA26031",
+    "localPsNumber": "IA26031",
+    "sourcePsId": "SIH26031",
+    "serialNo": 31,
+    "title": "AI Crop Disease Detection via Drone Imagery",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26032",
+    "localPsNumber": "IA26032",
+    "sourcePsId": "SIH26032",
+    "serialNo": 32,
+    "title": "Smart Irrigation Controller with Soil Moisture Sensing",
+    "category": "Hardware",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26033",
+    "localPsNumber": "IA26033",
+    "sourcePsId": "SIH26033",
+    "serialNo": 33,
+    "title": "Precision Farming Platform with Weather-Based Advisory",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26034",
+    "localPsNumber": "IA26034",
+    "sourcePsId": "SIH26034",
+    "serialNo": 34,
+    "title": "Farm-to-Consumer Direct Market Linkage Application",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26035",
+    "localPsNumber": "IA26035",
+    "sourcePsId": "SIH26035",
+    "serialNo": 35,
+    "title": "Cold Chain Monitoring System for Perishable Agricultural Produce",
+    "category": "Hardware",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26036",
+    "localPsNumber": "IA26036",
+    "sourcePsId": "SIH26036",
+    "serialNo": 36,
+    "title": "Automated Greenhouse Climate Control System",
+    "category": "Hardware",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26037",
+    "localPsNumber": "IA26037",
+    "sourcePsId": "SIH26037",
+    "serialNo": 37,
+    "title": "Crop Yield Prediction Using Satellite and Ground Data",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26038",
+    "localPsNumber": "IA26038",
+    "sourcePsId": "SIH26038",
+    "serialNo": 38,
+    "title": "Multilingual Voice-Based Agricultural Advisory Chatbot",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26039",
+    "localPsNumber": "IA26039",
+    "sourcePsId": "SIH26039",
+    "serialNo": 39,
+    "title": "Water Usage Optimization Platform for Irrigation Cooperatives",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26040",
+    "localPsNumber": "IA26040",
+    "sourcePsId": "SIH26040",
+    "serialNo": 40,
+    "title": "Soil Testing Kit with Mobile App Integration",
+    "category": "Hardware",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26041",
+    "localPsNumber": "IA26041",
+    "sourcePsId": "SIH26041",
+    "serialNo": 41,
+    "title": "Livestock Health Monitoring Using Ear-Tag Sensors",
+    "category": "Hardware",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26042",
+    "localPsNumber": "IA26042",
+    "sourcePsId": "SIH26042",
+    "serialNo": 42,
+    "title": "Post-Harvest Loss Reduction Using ML-Based Storage Advisory",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26043",
+    "localPsNumber": "IA26043",
+    "sourcePsId": "SIH26043",
+    "serialNo": 43,
+    "title": "Agri Supply Chain Transparency Using Blockchain",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26044",
+    "localPsNumber": "IA26044",
+    "sourcePsId": "SIH26044",
+    "serialNo": 44,
+    "title": "AI-Based Fertilizer Recommendation System",
+    "category": "Software",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26045",
+    "localPsNumber": "IA26045",
+    "sourcePsId": "SIH26045",
+    "serialNo": 45,
+    "title": "Automated Pest Trap with Image-Based Identification",
+    "category": "Hardware",
+    "theme": "Agriculture"
+  },
+  {
+    "id": "IA26046",
+    "localPsNumber": "IA26046",
+    "sourcePsId": "SIH26046",
+    "serialNo": 46,
+    "title": "Zero-Trust Network Architecture for Government Offices",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26047",
+    "localPsNumber": "IA26047",
+    "sourcePsId": "SIH26047",
+    "serialNo": 47,
+    "title": "AI-Based Phishing Detection Browser Extension",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26048",
+    "localPsNumber": "IA26048",
+    "sourcePsId": "SIH26048",
+    "serialNo": 48,
+    "title": "Threat Intelligence Aggregation Platform for SMEs",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26049",
+    "localPsNumber": "IA26049",
+    "sourcePsId": "SIH26049",
+    "serialNo": 49,
+    "title": "Automated Vulnerability Scanner for Web Applications",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26050",
+    "localPsNumber": "IA26050",
+    "sourcePsId": "SIH26050",
+    "serialNo": 50,
+    "title": "Post-Quantum Cryptographic Library Implementation",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26051",
+    "localPsNumber": "IA26051",
+    "sourcePsId": "SIH26051",
+    "serialNo": 51,
+    "title": "Insider Threat Detection System Using Behavioral Analytics",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26052",
+    "localPsNumber": "IA26052",
+    "sourcePsId": "SIH26052",
+    "serialNo": 52,
+    "title": "Secure Communication Platform for Critical Infrastructure",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26053",
+    "localPsNumber": "IA26053",
+    "sourcePsId": "SIH26053",
+    "serialNo": 53,
+    "title": "Digital Forensics Toolkit for Cyber Crime Investigation",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26054",
+    "localPsNumber": "IA26054",
+    "sourcePsId": "SIH26054",
+    "serialNo": 54,
+    "title": "IoT Device Security Assessment and Hardening Tool",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26055",
+    "localPsNumber": "IA26055",
+    "sourcePsId": "SIH26055",
+    "serialNo": 55,
+    "title": "Deepfake Detection System for Media Verification",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26056",
+    "localPsNumber": "IA26056",
+    "sourcePsId": "SIH26056",
+    "serialNo": 56,
+    "title": "Secure Voting System with End-to-End Verification",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26057",
+    "localPsNumber": "IA26057",
+    "sourcePsId": "SIH26057",
+    "serialNo": 57,
+    "title": "Network Intrusion Detection Using Machine Learning",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26058",
+    "localPsNumber": "IA26058",
+    "sourcePsId": "SIH26058",
+    "serialNo": 58,
+    "title": "Blockchain-Based Document Authentication System",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26059",
+    "localPsNumber": "IA26059",
+    "sourcePsId": "SIH26059",
+    "serialNo": 59,
+    "title": "Privacy-Preserving Data Sharing Framework for Healthcare",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26060",
+    "localPsNumber": "IA26060",
+    "sourcePsId": "SIH26060",
+    "serialNo": 60,
+    "title": "Ransomware Early Warning and Containment System",
+    "category": "Software",
+    "theme": "Cybersecurity"
+  },
+  {
+    "id": "IA26061",
+    "localPsNumber": "IA26061",
+    "sourcePsId": "SIH26061",
+    "serialNo": 61,
+    "title": "Financial Inclusion Platform for Unbanked Rural Population",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26062",
+    "localPsNumber": "IA26062",
+    "sourcePsId": "SIH26062",
+    "serialNo": 62,
+    "title": "AI-Based Micro-Credit Scoring for Self-Help Groups",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26063",
+    "localPsNumber": "IA26063",
+    "sourcePsId": "SIH26063",
+    "serialNo": 63,
+    "title": "Crop Insurance Claim Automation Using Satellite Data",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26064",
+    "localPsNumber": "IA26064",
+    "sourcePsId": "SIH26064",
+    "serialNo": 64,
+    "title": "Real-Time Fraud Detection for UPI Transactions",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26065",
+    "localPsNumber": "IA26065",
+    "sourcePsId": "SIH26065",
+    "serialNo": 65,
+    "title": "Smart Expense Tracker with AI-Based Budgeting for Students",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26066",
+    "localPsNumber": "IA26066",
+    "sourcePsId": "SIH26066",
+    "serialNo": 66,
+    "title": "Decentralized Lending Platform for Informal Workers",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26067",
+    "localPsNumber": "IA26067",
+    "sourcePsId": "SIH26067",
+    "serialNo": 67,
+    "title": "Tax Compliance Automation Tool for MSMEs",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26068",
+    "localPsNumber": "IA26068",
+    "sourcePsId": "SIH26068",
+    "serialNo": 68,
+    "title": "Cross-Border Remittance Tracker with Low Fee Routing",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26069",
+    "localPsNumber": "IA26069",
+    "sourcePsId": "SIH26069",
+    "serialNo": 69,
+    "title": "Digital Gold Investment Platform for Rural Savers",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26070",
+    "localPsNumber": "IA26070",
+    "sourcePsId": "SIH26070",
+    "serialNo": 70,
+    "title": "Pension Distribution Verification Using Biometrics",
+    "category": "Hardware",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26071",
+    "localPsNumber": "IA26071",
+    "sourcePsId": "SIH26071",
+    "serialNo": 71,
+    "title": "AI Chatbot for Personalized Financial Advisory",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26072",
+    "localPsNumber": "IA26072",
+    "sourcePsId": "SIH26072",
+    "serialNo": 72,
+    "title": "MSME Invoice Discounting Marketplace",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26073",
+    "localPsNumber": "IA26073",
+    "sourcePsId": "SIH26073",
+    "serialNo": 73,
+    "title": "Automatic GST Reconciliation and Filing Tool",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26074",
+    "localPsNumber": "IA26074",
+    "sourcePsId": "SIH26074",
+    "serialNo": 74,
+    "title": "Crowd-Funding Platform for Social Entrepreneurs",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26075",
+    "localPsNumber": "IA26075",
+    "sourcePsId": "SIH26075",
+    "serialNo": 75,
+    "title": "Open Banking API Integration Framework",
+    "category": "Software",
+    "theme": "FinTech"
+  },
+  {
+    "id": "IA26076",
+    "localPsNumber": "IA26076",
+    "sourcePsId": "SIH26076",
+    "serialNo": 76,
+    "title": "Smart Street Light Management Using IoT",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26077",
+    "localPsNumber": "IA26077",
+    "sourcePsId": "SIH26077",
+    "serialNo": 77,
+    "title": "Industrial Equipment Predictive Maintenance Using Sensors",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26078",
+    "localPsNumber": "IA26078",
+    "sourcePsId": "SIH26078",
+    "serialNo": 78,
+    "title": "Smart Metering Solution for Water Distribution Networks",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26079",
+    "localPsNumber": "IA26079",
+    "sourcePsId": "SIH26079",
+    "serialNo": 79,
+    "title": "Building Occupancy Monitoring for Energy Optimization",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26080",
+    "localPsNumber": "IA26080",
+    "sourcePsId": "SIH26080",
+    "serialNo": 80,
+    "title": "Cold Storage Monitoring and Alert System",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26081",
+    "localPsNumber": "IA26081",
+    "sourcePsId": "SIH26081",
+    "serialNo": 81,
+    "title": "Smart Parking Management System for Urban Areas",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26082",
+    "localPsNumber": "IA26082",
+    "sourcePsId": "SIH26082",
+    "serialNo": 82,
+    "title": "Fleet Management System with GPS and Telematics",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26083",
+    "localPsNumber": "IA26083",
+    "sourcePsId": "SIH26083",
+    "serialNo": 83,
+    "title": "Smart Home Automation for Elderly and Disabled",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26084",
+    "localPsNumber": "IA26084",
+    "sourcePsId": "SIH26084",
+    "serialNo": 84,
+    "title": "Real-Time Air Quality Monitoring Network for Cities",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26085",
+    "localPsNumber": "IA26085",
+    "sourcePsId": "SIH26085",
+    "serialNo": 85,
+    "title": "IoT-Based Food Safety Monitoring in Restaurants",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26086",
+    "localPsNumber": "IA26086",
+    "sourcePsId": "SIH26086",
+    "serialNo": 86,
+    "title": "Smart Dustbin System with Fill-Level Alerts",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26087",
+    "localPsNumber": "IA26087",
+    "sourcePsId": "SIH26087",
+    "serialNo": 87,
+    "title": "Worker Safety Monitoring Wearable for Construction Sites",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26088",
+    "localPsNumber": "IA26088",
+    "sourcePsId": "SIH26088",
+    "serialNo": 88,
+    "title": "IoT Pipeline Leak Detection for Water Utilities",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26089",
+    "localPsNumber": "IA26089",
+    "sourcePsId": "SIH26089",
+    "serialNo": 89,
+    "title": "Remote Monitoring of Solar Panel Efficiency",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26090",
+    "localPsNumber": "IA26090",
+    "sourcePsId": "SIH26090",
+    "serialNo": 90,
+    "title": "Smart Aquaculture Monitoring System",
+    "category": "Hardware",
+    "theme": "IoT"
+  },
+  {
+    "id": "IA26091",
+    "localPsNumber": "IA26091",
+    "sourcePsId": "SIH26091",
+    "serialNo": 91,
+    "title": "Carbon Footprint Tracker for Corporate Supply Chains",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26092",
+    "localPsNumber": "IA26092",
+    "sourcePsId": "SIH26092",
+    "serialNo": 92,
+    "title": "E-Waste Collection and Recycling Management Platform",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26093",
+    "localPsNumber": "IA26093",
+    "sourcePsId": "SIH26093",
+    "serialNo": 93,
+    "title": "Renewable Energy Marketplace for Peer-to-Peer Trading",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26094",
+    "localPsNumber": "IA26094",
+    "sourcePsId": "SIH26094",
+    "serialNo": 94,
+    "title": "Smart Composting System for Urban Households",
+    "category": "Hardware",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26095",
+    "localPsNumber": "IA26095",
+    "sourcePsId": "SIH26095",
+    "serialNo": 95,
+    "title": "Green Building Certification Compliance Checker",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26096",
+    "localPsNumber": "IA26096",
+    "sourcePsId": "SIH26096",
+    "serialNo": 96,
+    "title": "Plastic Waste Tracking Platform Using QR Codes",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26097",
+    "localPsNumber": "IA26097",
+    "sourcePsId": "SIH26097",
+    "serialNo": 97,
+    "title": "Water Footprint Calculator for Industrial Processes",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26098",
+    "localPsNumber": "IA26098",
+    "sourcePsId": "SIH26098",
+    "serialNo": 98,
+    "title": "Community Tree Planting Tracker with Satellite Verification",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26099",
+    "localPsNumber": "IA26099",
+    "sourcePsId": "SIH26099",
+    "serialNo": 99,
+    "title": "Low-Cost Biogas Plant Monitoring Controller",
+    "category": "Hardware",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26100",
+    "localPsNumber": "IA26100",
+    "sourcePsId": "SIH26100",
+    "serialNo": 100,
+    "title": "EV Charging Station Finder and Booking Platform",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26101",
+    "localPsNumber": "IA26101",
+    "sourcePsId": "SIH26101",
+    "serialNo": 101,
+    "title": "Sustainable Packaging Design Evaluation Tool",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26102",
+    "localPsNumber": "IA26102",
+    "sourcePsId": "SIH26102",
+    "serialNo": 102,
+    "title": "Rainwater Harvesting System with Automated Controls",
+    "category": "Hardware",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26103",
+    "localPsNumber": "IA26103",
+    "sourcePsId": "SIH26103",
+    "serialNo": 103,
+    "title": "ESG Reporting Automation Tool for Startups",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26104",
+    "localPsNumber": "IA26104",
+    "sourcePsId": "SIH26104",
+    "serialNo": 104,
+    "title": "Air Pollution Heatmap with Hyperlocal Data",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26105",
+    "localPsNumber": "IA26105",
+    "sourcePsId": "SIH26105",
+    "serialNo": 105,
+    "title": "Smart Energy Dashboard for Educational Institutions",
+    "category": "Software",
+    "theme": "Sustainability"
+  },
+  {
+    "id": "IA26106",
+    "localPsNumber": "IA26106",
+    "sourcePsId": "SIH26106",
+    "serialNo": 106,
+    "title": "Adaptive Traffic Signal Control Using AI",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26107",
+    "localPsNumber": "IA26107",
+    "sourcePsId": "SIH26107",
+    "serialNo": 107,
+    "title": "Multi-Modal Public Transport Planner",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26108",
+    "localPsNumber": "IA26108",
+    "sourcePsId": "SIH26108",
+    "serialNo": 108,
+    "title": "Pothole Detection and Reporting System Using Crowd Data",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26109",
+    "localPsNumber": "IA26109",
+    "sourcePsId": "SIH26109",
+    "serialNo": 109,
+    "title": "Smart Helmet with Accident Detection and Emergency Alert",
+    "category": "Hardware",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26110",
+    "localPsNumber": "IA26110",
+    "sourcePsId": "SIH26110",
+    "serialNo": 110,
+    "title": "Autonomous Last-Mile Delivery Robot for Urban Areas",
+    "category": "Hardware",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26111",
+    "localPsNumber": "IA26111",
+    "sourcePsId": "SIH26111",
+    "serialNo": 111,
+    "title": "Dynamic Carpooling Platform with Real-Time Matching",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26112",
+    "localPsNumber": "IA26112",
+    "sourcePsId": "SIH26112",
+    "serialNo": 112,
+    "title": "Electric Bus Fleet Optimization System",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26113",
+    "localPsNumber": "IA26113",
+    "sourcePsId": "SIH26113",
+    "serialNo": 113,
+    "title": "Smart Crosswalk Safety System for Pedestrians",
+    "category": "Hardware",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26114",
+    "localPsNumber": "IA26114",
+    "sourcePsId": "SIH26114",
+    "serialNo": 114,
+    "title": "Congestion Prediction and Alternative Route Suggestor",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26115",
+    "localPsNumber": "IA26115",
+    "sourcePsId": "SIH26115",
+    "serialNo": 115,
+    "title": "Accessible Navigation App for Visually Impaired Commuters",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26116",
+    "localPsNumber": "IA26116",
+    "sourcePsId": "SIH26116",
+    "serialNo": 116,
+    "title": "Vehicle Emission Monitoring at Traffic Checkpoints",
+    "category": "Hardware",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26117",
+    "localPsNumber": "IA26117",
+    "sourcePsId": "SIH26117",
+    "serialNo": 117,
+    "title": "Hyperloop Feasibility Simulation Tool",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26118",
+    "localPsNumber": "IA26118",
+    "sourcePsId": "SIH26118",
+    "serialNo": 118,
+    "title": "Real-Time Bus Tracking with Crowd Density Display",
+    "category": "Software",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26119",
+    "localPsNumber": "IA26119",
+    "sourcePsId": "SIH26119",
+    "serialNo": 119,
+    "title": "Drone-Based Traffic Management for Highway Incidents",
+    "category": "Hardware",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26120",
+    "localPsNumber": "IA26120",
+    "sourcePsId": "SIH26120",
+    "serialNo": 120,
+    "title": "Bicycle Lane Safety Monitor Using Computer Vision",
+    "category": "Hardware",
+    "theme": "Smart Mobility"
+  },
+  {
+    "id": "IA26121",
+    "localPsNumber": "IA26121",
+    "sourcePsId": "SIH26121",
+    "serialNo": 121,
+    "title": "Semi-Autonomous Search and Rescue Robot for Disaster Zones",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26122",
+    "localPsNumber": "IA26122",
+    "sourcePsId": "SIH26122",
+    "serialNo": 122,
+    "title": "Agricultural Weeding Robot with Computer Vision",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26123",
+    "localPsNumber": "IA26123",
+    "sourcePsId": "SIH26123",
+    "serialNo": 123,
+    "title": "Autonomous Pipe Inspection Robot for Underground Networks",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26124",
+    "localPsNumber": "IA26124",
+    "sourcePsId": "SIH26124",
+    "serialNo": 124,
+    "title": "Robotic Exoskeleton for Physical Rehabilitation",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26125",
+    "localPsNumber": "IA26125",
+    "sourcePsId": "SIH26125",
+    "serialNo": 125,
+    "title": "Swarm Robotics for Warehouse Inventory Management",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26126",
+    "localPsNumber": "IA26126",
+    "sourcePsId": "SIH26126",
+    "serialNo": 126,
+    "title": "AI-Guided Robot for Surgery Assistance",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26127",
+    "localPsNumber": "IA26127",
+    "sourcePsId": "SIH26127",
+    "serialNo": 127,
+    "title": "Automated Construction Site Safety Inspection Robot",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26128",
+    "localPsNumber": "IA26128",
+    "sourcePsId": "SIH26128",
+    "serialNo": 128,
+    "title": "Underwater ROV for Coral Reef Monitoring",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26129",
+    "localPsNumber": "IA26129",
+    "sourcePsId": "SIH26129",
+    "serialNo": 129,
+    "title": "Delivery Drone with Obstacle Avoidance in Urban Areas",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26130",
+    "localPsNumber": "IA26130",
+    "sourcePsId": "SIH26130",
+    "serialNo": 130,
+    "title": "Robot-Assisted Packaging System for MSMEs",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26131",
+    "localPsNumber": "IA26131",
+    "sourcePsId": "SIH26131",
+    "serialNo": 131,
+    "title": "Autonomous Inspection Drone for Power Line Maintenance",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26132",
+    "localPsNumber": "IA26132",
+    "sourcePsId": "SIH26132",
+    "serialNo": 132,
+    "title": "Mine Clearance Robot with Ground-Penetrating Radar",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26133",
+    "localPsNumber": "IA26133",
+    "sourcePsId": "SIH26133",
+    "serialNo": 133,
+    "title": "Social Assistive Robot for Children with Autism",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26134",
+    "localPsNumber": "IA26134",
+    "sourcePsId": "SIH26134",
+    "serialNo": 134,
+    "title": "Robotic Arm for Sorting Recyclable Waste",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26135",
+    "localPsNumber": "IA26135",
+    "sourcePsId": "SIH26135",
+    "serialNo": 135,
+    "title": "Autonomous Greenhouse Harvesting Robot",
+    "category": "Hardware",
+    "theme": "Robotics"
+  },
+  {
+    "id": "IA26136",
+    "localPsNumber": "IA26136",
+    "sourcePsId": "SIH26136",
+    "serialNo": 136,
+    "title": "AR-Based Heritage Site Restoration Visualizer",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26137",
+    "localPsNumber": "IA26137",
+    "sourcePsId": "SIH26137",
+    "serialNo": 137,
+    "title": "Multilingual AI Tourist Guide with Offline Support",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26138",
+    "localPsNumber": "IA26138",
+    "sourcePsId": "SIH26138",
+    "serialNo": 138,
+    "title": "Personalized Itinerary Planner for Rural Tourism",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26139",
+    "localPsNumber": "IA26139",
+    "sourcePsId": "SIH26139",
+    "serialNo": 139,
+    "title": "Smart Queue Management for Popular Tourist Spots",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26140",
+    "localPsNumber": "IA26140",
+    "sourcePsId": "SIH26140",
+    "serialNo": 140,
+    "title": "Cultural Heritage Digitization and 3D Archiving Tool",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26141",
+    "localPsNumber": "IA26141",
+    "sourcePsId": "SIH26141",
+    "serialNo": 141,
+    "title": "Eco-Tourism Impact Assessment Platform",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26142",
+    "localPsNumber": "IA26142",
+    "sourcePsId": "SIH26142",
+    "serialNo": 142,
+    "title": "Unified Tourism Dashboard for State Governments",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26143",
+    "localPsNumber": "IA26143",
+    "sourcePsId": "SIH26143",
+    "serialNo": 143,
+    "title": "Accessible Tourism Finder for Differently-Abled Travelers",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26144",
+    "localPsNumber": "IA26144",
+    "sourcePsId": "SIH26144",
+    "serialNo": 144,
+    "title": "Automated Visa Application Status Tracker",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26145",
+    "localPsNumber": "IA26145",
+    "sourcePsId": "SIH26145",
+    "serialNo": 145,
+    "title": "Real-Time Festival Safety and Crowd Monitoring System",
+    "category": "Hardware",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26146",
+    "localPsNumber": "IA26146",
+    "sourcePsId": "SIH26146",
+    "serialNo": 146,
+    "title": "Hotel Sustainability Certification Rating Platform",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26147",
+    "localPsNumber": "IA26147",
+    "sourcePsId": "SIH26147",
+    "serialNo": 147,
+    "title": "AI Translator for 22 Indian Languages for Tourists",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26148",
+    "localPsNumber": "IA26148",
+    "sourcePsId": "SIH26148",
+    "serialNo": 148,
+    "title": "Digital Artisan Marketplace for Craft Tourism",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26149",
+    "localPsNumber": "IA26149",
+    "sourcePsId": "SIH26149",
+    "serialNo": 149,
+    "title": "Smart Museum Interactive Experience System",
+    "category": "Hardware",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26150",
+    "localPsNumber": "IA26150",
+    "sourcePsId": "SIH26150",
+    "serialNo": 150,
+    "title": "Tourist Safety Alert System with Emergency Response",
+    "category": "Software",
+    "theme": "Tourism"
+  },
+  {
+    "id": "IA26151",
+    "localPsNumber": "IA26151",
+    "sourcePsId": "SIH26151",
+    "serialNo": 151,
+    "title": "Skill-Based Job Matching for Informal Workers",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26152",
+    "localPsNumber": "IA26152",
+    "sourcePsId": "SIH26152",
+    "serialNo": 152,
+    "title": "Platform for Connecting NGOs with Volunteers",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26153",
+    "localPsNumber": "IA26153",
+    "sourcePsId": "SIH26153",
+    "serialNo": 153,
+    "title": "Community Legal Aid Access Platform",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26154",
+    "localPsNumber": "IA26154",
+    "sourcePsId": "SIH26154",
+    "serialNo": 154,
+    "title": "AI-Based Anti-Human Trafficking Early Warning System",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26155",
+    "localPsNumber": "IA26155",
+    "sourcePsId": "SIH26155",
+    "serialNo": 155,
+    "title": "Domestic Violence Support and Reporting Platform",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26156",
+    "localPsNumber": "IA26156",
+    "sourcePsId": "SIH26156",
+    "serialNo": 156,
+    "title": "Disability-Inclusive Employment Portal",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26157",
+    "localPsNumber": "IA26157",
+    "sourcePsId": "SIH26157",
+    "serialNo": 157,
+    "title": "Senior Citizen Assisted Living Technology Platform",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26158",
+    "localPsNumber": "IA26158",
+    "sourcePsId": "SIH26158",
+    "serialNo": 158,
+    "title": "Food Waste Redistribution App Connecting Restaurants and Shelters",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26159",
+    "localPsNumber": "IA26159",
+    "sourcePsId": "SIH26159",
+    "serialNo": 159,
+    "title": "Child Labor Detection and Reporting System",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26160",
+    "localPsNumber": "IA26160",
+    "sourcePsId": "SIH26160",
+    "serialNo": 160,
+    "title": "Rural Women Entrepreneurship Marketplace",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26161",
+    "localPsNumber": "IA26161",
+    "sourcePsId": "SIH26161",
+    "serialNo": 161,
+    "title": "Public Grievance Redressal Tracking Platform",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26162",
+    "localPsNumber": "IA26162",
+    "sourcePsId": "SIH26162",
+    "serialNo": 162,
+    "title": "Community Health Worker Training Simulator",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26163",
+    "localPsNumber": "IA26163",
+    "sourcePsId": "SIH26163",
+    "serialNo": 163,
+    "title": "Anti-Ragging Platform for Educational Institutions",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26164",
+    "localPsNumber": "IA26164",
+    "sourcePsId": "SIH26164",
+    "serialNo": 164,
+    "title": "Street Vendor License and Support Platform",
+    "category": "Software",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26165",
+    "localPsNumber": "IA26165",
+    "sourcePsId": "SIH26165",
+    "serialNo": 165,
+    "title": "Sanitation Worker Safety and Health Monitoring System",
+    "category": "Hardware",
+    "theme": "Social Innovation"
+  },
+  {
+    "id": "IA26166",
+    "localPsNumber": "IA26166",
+    "sourcePsId": "SIH26166",
+    "serialNo": 166,
+    "title": "Federated Learning Framework for Private Medical Data",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26167",
+    "localPsNumber": "IA26167",
+    "sourcePsId": "SIH26167",
+    "serialNo": 167,
+    "title": "Neuromorphic Computing for Edge AI Applications",
+    "category": "Hardware",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26168",
+    "localPsNumber": "IA26168",
+    "sourcePsId": "SIH26168",
+    "serialNo": 168,
+    "title": "Quantum Key Distribution Simulator",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26169",
+    "localPsNumber": "IA26169",
+    "sourcePsId": "SIH26169",
+    "serialNo": 169,
+    "title": "AI-Based Protein Folding Analysis Tool for Drug Discovery",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26170",
+    "localPsNumber": "IA26170",
+    "sourcePsId": "SIH26170",
+    "serialNo": 170,
+    "title": "Brain-Computer Interface for Locked-In Syndrome Patients",
+    "category": "Hardware",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26171",
+    "localPsNumber": "IA26171",
+    "sourcePsId": "SIH26171",
+    "serialNo": 171,
+    "title": "Generative AI for Synthetic Medical Image Augmentation",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26172",
+    "localPsNumber": "IA26172",
+    "sourcePsId": "SIH26172",
+    "serialNo": 172,
+    "title": "Edge AI Inference Engine for Resource-Constrained Devices",
+    "category": "Hardware",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26173",
+    "localPsNumber": "IA26173",
+    "sourcePsId": "SIH26173",
+    "serialNo": 173,
+    "title": "Digital Twin Platform for Industrial Asset Management",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26174",
+    "localPsNumber": "IA26174",
+    "sourcePsId": "SIH26174",
+    "serialNo": 174,
+    "title": "Explainable AI Framework for Judicial Decision Support",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26175",
+    "localPsNumber": "IA26175",
+    "sourcePsId": "SIH26175",
+    "serialNo": 175,
+    "title": "6G Network Slicing Simulator for Research Labs",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26176",
+    "localPsNumber": "IA26176",
+    "sourcePsId": "SIH26176",
+    "serialNo": 176,
+    "title": "Homomorphic Encryption Library for Cloud Analytics",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26177",
+    "localPsNumber": "IA26177",
+    "sourcePsId": "SIH26177",
+    "serialNo": 177,
+    "title": "Autonomous Multi-Agent System for Complex Scheduling",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26178",
+    "localPsNumber": "IA26178",
+    "sourcePsId": "SIH26178",
+    "serialNo": 178,
+    "title": "Self-Healing Network Protocol for Satellite Communication",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26179",
+    "localPsNumber": "IA26179",
+    "sourcePsId": "SIH26179",
+    "serialNo": 179,
+    "title": "Low-Power Neural Network Accelerator on FPGA",
+    "category": "Hardware",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26180",
+    "localPsNumber": "IA26180",
+    "sourcePsId": "SIH26180",
+    "serialNo": 180,
+    "title": "Real-Time Language Model Compression for Mobile Deployment",
+    "category": "Software",
+    "theme": "DeepTech"
+  },
+  {
+    "id": "IA26181",
+    "localPsNumber": "IA26181",
+    "sourcePsId": "SIH26181",
+    "serialNo": 181,
+    "title": "Flood Prediction and Early Warning System Using Sensor Networks",
+    "category": "Hardware",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26182",
+    "localPsNumber": "IA26182",
+    "sourcePsId": "SIH26182",
+    "serialNo": 182,
+    "title": "AI-Based Earthquake Damage Assessment via Satellite",
+    "category": "Software",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26183",
+    "localPsNumber": "IA26183",
+    "sourcePsId": "SIH26183",
+    "serialNo": 183,
+    "title": "Disaster Relief Resource Distribution Optimizer",
+    "category": "Software",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26184",
+    "localPsNumber": "IA26184",
+    "sourcePsId": "SIH26184",
+    "serialNo": 184,
+    "title": "Community Disaster Response Coordination Platform",
+    "category": "Software",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26185",
+    "localPsNumber": "IA26185",
+    "sourcePsId": "SIH26185",
+    "serialNo": 185,
+    "title": "Fire Detection and Suppression Alert System for Forests",
+    "category": "Hardware",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26186",
+    "localPsNumber": "IA26186",
+    "sourcePsId": "SIH26186",
+    "serialNo": 186,
+    "title": "Real-Time Landslide Risk Monitoring System",
+    "category": "Hardware",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26187",
+    "localPsNumber": "IA26187",
+    "sourcePsId": "SIH26187",
+    "serialNo": 187,
+    "title": "Survivor Locator Drone for Post-Earthquake Rescue",
+    "category": "Hardware",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26188",
+    "localPsNumber": "IA26188",
+    "sourcePsId": "SIH26188",
+    "serialNo": 188,
+    "title": "Offline Emergency Communication Mesh Network",
+    "category": "Hardware",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26189",
+    "localPsNumber": "IA26189",
+    "sourcePsId": "SIH26189",
+    "serialNo": 189,
+    "title": "Disaster Preparedness Training Simulator Using VR",
+    "category": "Software",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26190",
+    "localPsNumber": "IA26190",
+    "sourcePsId": "SIH26190",
+    "serialNo": 190,
+    "title": "Smart Dam Safety Monitoring and Alert System",
+    "category": "Hardware",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26191",
+    "localPsNumber": "IA26191",
+    "sourcePsId": "SIH26191",
+    "serialNo": 191,
+    "title": "Tsunami Early Warning Buoy Network",
+    "category": "Hardware",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26192",
+    "localPsNumber": "IA26192",
+    "sourcePsId": "SIH26192",
+    "serialNo": 192,
+    "title": "Shelter Capacity and Need Matching Platform Post-Disaster",
+    "category": "Software",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26193",
+    "localPsNumber": "IA26193",
+    "sourcePsId": "SIH26193",
+    "serialNo": 193,
+    "title": "AI Debris Flow Analysis for Mountain Communities",
+    "category": "Software",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26194",
+    "localPsNumber": "IA26194",
+    "sourcePsId": "SIH26194",
+    "serialNo": 194,
+    "title": "Cyclone Path Prediction Using ML and Historical Data",
+    "category": "Software",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26195",
+    "localPsNumber": "IA26195",
+    "sourcePsId": "SIH26195",
+    "serialNo": 195,
+    "title": "Integrated Disaster Alert App with Multi-Channel Notification",
+    "category": "Software",
+    "theme": "Disaster Management"
+  },
+  {
+    "id": "IA26196",
+    "localPsNumber": "IA26196",
+    "sourcePsId": "SIH26196",
+    "serialNo": 196,
+    "title": "Unified Citizen Service Portal for Multiple Government Schemes",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26197",
+    "localPsNumber": "IA26197",
+    "sourcePsId": "SIH26197",
+    "serialNo": 197,
+    "title": "AI-Based Anomaly Detection in Public Procurement",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26198",
+    "localPsNumber": "IA26198",
+    "sourcePsId": "SIH26198",
+    "serialNo": 198,
+    "title": "Smart Ration Distribution Verification Using Biometrics",
+    "category": "Hardware",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26199",
+    "localPsNumber": "IA26199",
+    "sourcePsId": "SIH26199",
+    "serialNo": 199,
+    "title": "Government Asset Management and Tracking Platform",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26200",
+    "localPsNumber": "IA26200",
+    "sourcePsId": "SIH26200",
+    "serialNo": 200,
+    "title": "Policy Impact Assessment Simulation Tool",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26201",
+    "localPsNumber": "IA26201",
+    "sourcePsId": "SIH26201",
+    "serialNo": 201,
+    "title": "Municipal Tax Payment and Compliance Portal",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26202",
+    "localPsNumber": "IA26202",
+    "sourcePsId": "SIH26202",
+    "serialNo": 202,
+    "title": "Land Records Digitization and Verification System",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26203",
+    "localPsNumber": "IA26203",
+    "sourcePsId": "SIH26203",
+    "serialNo": 203,
+    "title": "Real-Time Crime Mapping Dashboard for Law Enforcement",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26204",
+    "localPsNumber": "IA26204",
+    "sourcePsId": "SIH26204",
+    "serialNo": 204,
+    "title": "Budget Transparency Portal for District Administration",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26205",
+    "localPsNumber": "IA26205",
+    "sourcePsId": "SIH26205",
+    "serialNo": 205,
+    "title": "Digital ID Verification for Government Scheme Eligibility",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26206",
+    "localPsNumber": "IA26206",
+    "sourcePsId": "SIH26206",
+    "serialNo": 206,
+    "title": "AI-Based Judicial Case Load Management System",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26207",
+    "localPsNumber": "IA26207",
+    "sourcePsId": "SIH26207",
+    "serialNo": 207,
+    "title": "Smart Court Document Management and E-Filing System",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26208",
+    "localPsNumber": "IA26208",
+    "sourcePsId": "SIH26208",
+    "serialNo": 208,
+    "title": "Election Booth Management and Queue Prediction System",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26209",
+    "localPsNumber": "IA26209",
+    "sourcePsId": "SIH26209",
+    "serialNo": 209,
+    "title": "Automated Birth and Death Registration System for Villages",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26210",
+    "localPsNumber": "IA26210",
+    "sourcePsId": "SIH26210",
+    "serialNo": 210,
+    "title": "Citizen Feedback Analytics for Urban Local Bodies",
+    "category": "Software",
+    "theme": "Smart Governance"
+  },
+  {
+    "id": "IA26211",
+    "localPsNumber": "IA26211",
+    "sourcePsId": "SIH26211",
+    "serialNo": 211,
+    "title": "Digital Marketplace for Artisans and Weavers",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26212",
+    "localPsNumber": "IA26212",
+    "sourcePsId": "SIH26212",
+    "serialNo": 212,
+    "title": "Rural Road Condition Monitoring Using Crowdsourcing",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26213",
+    "localPsNumber": "IA26213",
+    "sourcePsId": "SIH26213",
+    "serialNo": 213,
+    "title": "Affordable Drip Irrigation Kit with Remote Monitoring",
+    "category": "Hardware",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26214",
+    "localPsNumber": "IA26214",
+    "sourcePsId": "SIH26214",
+    "serialNo": 214,
+    "title": "Village-Level Electricity Consumption Tracker",
+    "category": "Hardware",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26215",
+    "localPsNumber": "IA26215",
+    "sourcePsId": "SIH26215",
+    "serialNo": 215,
+    "title": "Mobile Health Van Routing and Appointment System",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26216",
+    "localPsNumber": "IA26216",
+    "sourcePsId": "SIH26216",
+    "serialNo": 216,
+    "title": "Rural Drinking Water Quality Testing System",
+    "category": "Hardware",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26217",
+    "localPsNumber": "IA26217",
+    "sourcePsId": "SIH26217",
+    "serialNo": 217,
+    "title": "MNREGA Work Progress Tracking Platform",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26218",
+    "localPsNumber": "IA26218",
+    "sourcePsId": "SIH26218",
+    "serialNo": 218,
+    "title": "Vernacular Language Voice Banking Application",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26219",
+    "localPsNumber": "IA26219",
+    "sourcePsId": "SIH26219",
+    "serialNo": 219,
+    "title": "Rural Cold Storage Network Demand Aggregation",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26220",
+    "localPsNumber": "IA26220",
+    "sourcePsId": "SIH26220",
+    "serialNo": 220,
+    "title": "Last-Mile Connectivity Platform for Remote Villages",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26221",
+    "localPsNumber": "IA26221",
+    "sourcePsId": "SIH26221",
+    "serialNo": 221,
+    "title": "Grain Procurement Transparency Tool for Farmers",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26222",
+    "localPsNumber": "IA26222",
+    "sourcePsId": "SIH26222",
+    "serialNo": 222,
+    "title": "Solar Micro-Grid Management for Off-Grid Villages",
+    "category": "Hardware",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26223",
+    "localPsNumber": "IA26223",
+    "sourcePsId": "SIH26223",
+    "serialNo": 223,
+    "title": "Community Skill Center Booking and Training Tracker",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26224",
+    "localPsNumber": "IA26224",
+    "sourcePsId": "SIH26224",
+    "serialNo": 224,
+    "title": "Livestock Market Price Feed for Rural Farmers",
+    "category": "Software",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26225",
+    "localPsNumber": "IA26225",
+    "sourcePsId": "SIH26225",
+    "serialNo": 225,
+    "title": "Affordable Smart Home Kit for BPL Households",
+    "category": "Hardware",
+    "theme": "Rural Development"
+  },
+  {
+    "id": "IA26226",
+    "localPsNumber": "IA26226",
+    "sourcePsId": "SIH26226",
+    "serialNo": 226,
+    "title": "Real-Time River Pollution Detection Network",
+    "category": "Hardware",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26227",
+    "localPsNumber": "IA26227",
+    "sourcePsId": "SIH26227",
+    "serialNo": 227,
+    "title": "AI-Based Wildlife Poaching Detection via Camera Traps",
+    "category": "Software",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26228",
+    "localPsNumber": "IA26228",
+    "sourcePsId": "SIH26228",
+    "serialNo": 228,
+    "title": "Mangrove Forest Health Monitoring via Drone Survey",
+    "category": "Hardware",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26229",
+    "localPsNumber": "IA26229",
+    "sourcePsId": "SIH26229",
+    "serialNo": 229,
+    "title": "Industrial Effluent Treatment Compliance Monitoring System",
+    "category": "Hardware",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26230",
+    "localPsNumber": "IA26230",
+    "sourcePsId": "SIH26230",
+    "serialNo": 230,
+    "title": "Citizen Science Platform for Biodiversity Mapping",
+    "category": "Software",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26231",
+    "localPsNumber": "IA26231",
+    "sourcePsId": "SIH26231",
+    "serialNo": 231,
+    "title": "Forest Fire Risk Heatmap Using Weather and Vegetation Data",
+    "category": "Software",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26232",
+    "localPsNumber": "IA26232",
+    "sourcePsId": "SIH26232",
+    "serialNo": 232,
+    "title": "Microplastics Detection in Drinking Water Sources",
+    "category": "Hardware",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26233",
+    "localPsNumber": "IA26233",
+    "sourcePsId": "SIH26233",
+    "serialNo": 233,
+    "title": "Urban Heat Island Mitigation Planning Tool",
+    "category": "Software",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26234",
+    "localPsNumber": "IA26234",
+    "sourcePsId": "SIH26234",
+    "serialNo": 234,
+    "title": "Illegal Mining Detection Using Satellite Imagery",
+    "category": "Software",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26235",
+    "localPsNumber": "IA26235",
+    "sourcePsId": "SIH26235",
+    "serialNo": 235,
+    "title": "Ocean Acidification Monitoring Buoy Network",
+    "category": "Hardware",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26236",
+    "localPsNumber": "IA26236",
+    "sourcePsId": "SIH26236",
+    "serialNo": 236,
+    "title": "Glacial Melt Rate Prediction Using Multispectral Imagery",
+    "category": "Software",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26237",
+    "localPsNumber": "IA26237",
+    "sourcePsId": "SIH26237",
+    "serialNo": 237,
+    "title": "Noise Pollution Mapping System for Urban Planning",
+    "category": "Hardware",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26238",
+    "localPsNumber": "IA26238",
+    "sourcePsId": "SIH26238",
+    "serialNo": 238,
+    "title": "Wetland Health Scoring and Conservation Prioritization",
+    "category": "Software",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26239",
+    "localPsNumber": "IA26239",
+    "sourcePsId": "SIH26239",
+    "serialNo": 239,
+    "title": "Green Cover Loss Alert System for Protected Areas",
+    "category": "Software",
+    "theme": "Environment"
+  },
+  {
+    "id": "IA26240",
+    "localPsNumber": "IA26240",
+    "sourcePsId": "SIH26240",
+    "serialNo": 240,
+    "title": "Automated Solid Waste Segregation Using Computer Vision",
+    "category": "Hardware",
+    "theme": "Environment"
+  }
+]
