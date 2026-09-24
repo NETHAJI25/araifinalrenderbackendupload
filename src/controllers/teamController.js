@@ -129,16 +129,24 @@ exports.joinTeam = async (req, res) => {
 
     const user = userSnapshot.val();
 
-    // Get team
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team by querying teamId field (not Firebase key)
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(404).json({
         success: false,
         message: 'Invalid Team ID. Please check and try again.'
       });
     }
 
-    const team = teamSnapshot.val();
+    // Get the first (and only) matching team
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      team.id = teamKey; // Add Firebase key for updates
+      return true; // Stop after first match
+    });
 
     // Check if team is full
     if (team.members.length >= 6) {
@@ -183,8 +191,8 @@ exports.joinTeam = async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Save updated team
-    await teamsRef.child(teamId).set(updatedTeam);
+    // Save updated team using Firebase key
+    await teamsRef.child(teamKey).set(updatedTeam);
 
     // Update user's teamId
     await usersRef.child(userId).update({ teamId: team.teamId });
@@ -192,7 +200,7 @@ exports.joinTeam = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Joined team successfully',
-      data: updatedTeam
+      data: { ...updatedTeam, id: teamKey }
     });
   } catch (error) {
     console.error('Join team error:', error);
@@ -217,15 +225,23 @@ exports.getTeam = async (req, res) => {
       });
     }
 
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Query by teamId field
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      team.id = teamKey;
+      return true;
+    });
 
     res.status(200).json({
       success: true,
@@ -265,16 +281,23 @@ exports.getMyTeam = async (req, res) => {
       });
     }
 
-    // Get team
-    const teamSnapshot = await teamsRef.child(user.teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Query team by teamId field
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(user.teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(200).json({
         success: true,
         data: null
       });
     }
 
-    const team = teamSnapshot.val();
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      team.id = teamKey;
+      return true;
+    });
 
     res.status(200).json({
       success: true,
@@ -297,16 +320,22 @@ exports.confirmTeam = async (req, res) => {
     const { teamId } = req.params;
     const userId = req.user.userId;
 
-    // Get team
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team by querying teamId field
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      return true;
+    });
 
     // Check if user is team leader
     if (team.leaderId !== userId) {
@@ -317,10 +346,10 @@ exports.confirmTeam = async (req, res) => {
     }
 
     // Check if team has minimum members
-    if (team.members.length < 2) {
+    if (team.members.length < 4) {
       return res.status(400).json({
         success: false,
-        message: 'Team must have at least 2 members to confirm.'
+        message: 'Team must have at least 4 members to confirm.'
       });
     }
 
@@ -331,13 +360,13 @@ exports.confirmTeam = async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Save updated team
-    await teamsRef.child(teamId).set(updatedTeam);
+    // Save updated team using Firebase key
+    await teamsRef.child(teamKey).set(updatedTeam);
 
     res.status(200).json({
       success: true,
       message: 'Team confirmed successfully',
-      data: updatedTeam
+      data: { ...updatedTeam, id: teamKey }
     });
   } catch (error) {
     console.error('Confirm team error:', error);
@@ -357,16 +386,22 @@ exports.updateTeamProblemStatement = async (req, res) => {
     const { psId, psTitle } = req.body;
     const userId = req.user.userId;
 
-    // Get team
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team by querying teamId field
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      return true;
+    });
 
     // Check if user is team leader
     if (team.leaderId !== userId) {
@@ -384,13 +419,13 @@ exports.updateTeamProblemStatement = async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Save updated team
-    await teamsRef.child(teamId).set(updatedTeam);
+    // Save updated team using Firebase key
+    await teamsRef.child(teamKey).set(updatedTeam);
 
     res.status(200).json({
       success: true,
       message: 'Problem statement updated successfully',
-      data: updatedTeam
+      data: { ...updatedTeam, id: teamKey }
     });
   } catch (error) {
     console.error('Update problem statement error:', error);
@@ -409,16 +444,22 @@ exports.leaveTeam = async (req, res) => {
     const { teamId } = req.params;
     const userId = req.user.userId;
 
-    // Get team
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team by querying teamId field
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      return true;
+    });
 
     // Check if user is team leader
     if (team.leaderId === userId) {
@@ -436,8 +477,8 @@ exports.leaveTeam = async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Save updated team
-    await teamsRef.child(teamId).set(updatedTeam);
+    // Save updated team using Firebase key
+    await teamsRef.child(teamKey).set(updatedTeam);
 
     // Update user's teamId
     await usersRef.child(userId).update({ teamId: null });
@@ -445,7 +486,7 @@ exports.leaveTeam = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Left team successfully',
-      data: updatedTeam
+      data: { ...updatedTeam, id: teamKey }
     });
   } catch (error) {
     console.error('Leave team error:', error);
@@ -464,16 +505,22 @@ exports.markTeamComplete = async (req, res) => {
     const { teamId } = req.params;
     const userId = req.user.userId;
 
-    // Get team
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team by querying teamId field
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      return true;
+    });
 
     // Check if user is team leader
     if (team.leaderId !== userId) {
@@ -484,10 +531,10 @@ exports.markTeamComplete = async (req, res) => {
     }
 
     // Check team size
-    if (team.members.length < 2 || team.members.length > 6) {
+    if (team.members.length < 4 || team.members.length > 6) {
       return res.status(400).json({
         success: false,
-        message: 'Team must have between 2 and 6 members to be completed.'
+        message: 'Team must have between 4 and 6 members to be completed.'
       });
     }
 
@@ -498,13 +545,13 @@ exports.markTeamComplete = async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Save updated team
-    await teamsRef.child(teamId).set(updatedTeam);
+    // Save updated team using Firebase key
+    await teamsRef.child(teamKey).set(updatedTeam);
 
     res.status(200).json({
       success: true,
       message: 'Team marked as complete successfully',
-      data: updatedTeam
+      data: { ...updatedTeam, id: teamKey }
     });
   } catch (error) {
     console.error('Mark team complete error:', error);
@@ -566,16 +613,22 @@ exports.rejectTeam = async (req, res) => {
       });
     }
 
-    // Get team
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team by querying teamId field
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      return true;
+    });
 
     // Update team status
     const updatedTeam = {
@@ -585,13 +638,13 @@ exports.rejectTeam = async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Save updated team
-    await teamsRef.child(teamId).set(updatedTeam);
+    // Save updated team using Firebase key
+    await teamsRef.child(teamKey).set(updatedTeam);
 
     res.status(200).json({
       success: true,
       message: 'Team rejected successfully',
-      data: updatedTeam
+      data: { ...updatedTeam, id: teamKey }
     });
   } catch (error) {
     console.error('Reject team error:', error);
@@ -626,16 +679,22 @@ exports.updateTeamRound = async (req, res) => {
       });
     }
 
-    // Get team
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team by querying teamId field
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
+    if (!teamsSnapshot.exists()) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    let team = null;
+    let teamKey = null;
+    teamsSnapshot.forEach((childSnapshot) => {
+      teamKey = childSnapshot.key;
+      team = childSnapshot.val();
+      return true;
+    });
 
     // Update team round
     const updatedTeam = {
@@ -644,13 +703,13 @@ exports.updateTeamRound = async (req, res) => {
       updatedAt: new Date().toISOString()
     };
 
-    // Save updated team
-    await teamsRef.child(teamId).set(updatedTeam);
+    // Save updated team using Firebase key
+    await teamsRef.child(teamKey).set(updatedTeam);
 
     res.status(200).json({
       success: true,
       message: `Team promoted to Round ${round} successfully`,
-      data: updatedTeam
+      data: { ...updatedTeam, id: teamKey }
     });
   } catch (error) {
     console.error('Update team round error:', error);
