@@ -9,7 +9,7 @@ const path = require('path');
 dotenv.config();
 
 // Supabase Postgres pool (lazy — connects on first query)
-const { pool } = require('./src/config/db');
+const { getPool } = require('./src/config/db');
 
 // Initialize Express app
 const app = express();
@@ -48,7 +48,7 @@ app.use(morgan('dev'));
     return;
   }
   try {
-    await pool.query('SELECT 1');
+    await (await getPool()).query('SELECT 1');
     console.log('Supabase Postgres connected successfully');
   } catch (error) {
     console.error('Postgres connection check failed (will retry per query):', error.message);
@@ -67,7 +67,7 @@ app.get('/health', (req, res) => {
 // Temporary DB connectivity diagnostic (no secrets exposed)
 app.get('/api/debug/db', async (req, res) => {
   try {
-    const r = await pool.query('SELECT version()');
+    const r = await (await getPool()).query('SELECT version()');
     res.json({ success: true, db: r.rows[0].version.slice(0, 80) });
   } catch (e) {
     res.json({ success: false, error: e.message, code: e.code });

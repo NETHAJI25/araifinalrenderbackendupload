@@ -161,7 +161,7 @@ exports.getMySubmission = async (req, res) => {
  */
 exports.updateSubmission = async (req, res) => {
   try {
-    const { submissionId } = req.params;
+    const submissionId = req.params.submissionId || req.params.id;
     const updates = req.body;
     const userId = req.user.userId;
 
