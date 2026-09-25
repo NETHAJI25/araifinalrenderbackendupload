@@ -16,7 +16,7 @@ async function syncTeamMemberPayment(userId) {
     const userSnapshot = await usersRef.child(userId).once('value');
     if (!userSnapshot.exists()) return;
     const user = userSnapshot.val();
-    if (!user.teamId) return;
+    if (!user || !user.teamId) return;
 
     const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(user.teamId).once('value');
     if (!teamsSnapshot.exists()) return;
@@ -235,6 +235,8 @@ exports.mockCompletePay = async (req, res) => {
         message: 'User not found'
       });
     }
+
+    const user = userSnapshot.val();
 
     // Get user's payments
     const paymentsSnapshot = await paymentsRef.orderByChild('userId').equalTo(userId).once('value');
