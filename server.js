@@ -64,6 +64,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Temporary DB connectivity diagnostic (no secrets exposed)
+app.get('/api/debug/db', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT version()');
+    res.json({ success: true, db: r.rows[0].version.slice(0, 80) });
+  } catch (e) {
+    res.json({ success: false, error: e.message, code: e.code });
+  }
+});
+
 // API Routes
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/teams', require('./src/routes/teamRoutes'));
