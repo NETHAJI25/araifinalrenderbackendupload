@@ -1,12 +1,49 @@
 const { v4: uuidv4 } = require('uuid');
-const firebaseAdmin = require('firebase-admin');
-const { eventConfig } = require('../config/eventConfig');
+const { query } = require('../config/db');
 const { generateTeamId } = require('../utils/idGenerator');
+const eventConfig = require('../config/eventConfig');
 
-// Get Firebase Realtime Database reference
-const db = firebaseAdmin.database();
-const teamsRef = db.ref('teams');
-const usersRef = db.ref('users');
+function toISOStringSafe(value) {
+  if (value instanceof Date) return value.toISOString();
+  return value;
+}
+
+function formatTeam(teamRow, memberRows) {
+  const team = {
+    id: teamRow.id,
+    teamId: teamRow.team_id,
+    teamName: teamRow.team_name,
+    leaderId: teamRow.leader_id,
+    problemStatementId: teamRow.problem_statement_id,
+    problemStatementTitle: teamRow.problem_statement_title,
+    members: memberRows.map((m) => ({
+      userId: m.user_id,
+      name: m.name,
+      college: m.college,
+      role: m.role,
+      paymentStatus: m.payment_status,
+      profileCompleted: m.profile_completed,
+      joinedAt: toISOStringSafe(m.joined_at)
+    })),
+    status: teamRow.status,
+    confirmationStatus: teamRow.confirmation_status,
+    round: teamRow.round,
+    createdAt: toISOStringSafe(teamRow.created_at),
+    updatedAt: toISOStringSafe(teamRow.updated_at)
+  };
+  if (teamRow.rejection_reason !== null && teamRow.rejection_reason !== undefined) {
+    team.rejectionReason = teamRow.rejection_reason;
+  }
+  return team;
+}
+
+async function fetchTeamByCode(code) {
+  const teamRes = await query('SELECT * FROM teams WHERE team_id = $1', [code]);
+  if (teamRes.rows.length === 0) return null;
+  const teamRow = teamRes.rows[0];
+  const membersRes = await query('SELECT * FROM team_members WHERE team_id = $1 ORDER BY joined_at', [code]);
+  return formatTeam(teamRow, membersRes.rows);
+}
 
 /**
  * Create a new team
@@ -25,30 +62,25 @@ exports.createTeam = async (req, res) => {
     }
 
     // Get current user
-    const userSnapshot = await usersRef.child(userId).once('value');
-    if (!userSnapshot.exists()) {
+    const userRes = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = userSnapshot.val();
+    const user = userRes.rows[0];
 
     // Check if user is already in a team
-    const teamsSnapshot = await teamsRef.orderByChild('members').once('value');
-    let userInTeam = false;
-    teamsSnapshot.forEach((teamSnapshot) => {
-      const team = teamSnapshot.val();
-      const memberExists = team.members.some(member => member.userId === userId);
-      if (memberExists) {
-        userInTeam = true;
-        return true;
-      }
-      return false;
-    });
-
-    if (userInTeam) {
+    if (user.team_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You are already in a team'
+      });
+    }
+    const memberRes = await query('SELECT 1 FROM team_members WHERE user_id = $1 LIMIT 1', [userId]);
+    if (memberRes.rows.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'You are already in a team'
@@ -56,37 +88,25 @@ exports.createTeam = async (req, res) => {
     }
 
     // Create new team
-    const teamId = uuidv4();
+    const id = uuidv4();
     const generatedTeamId = generateTeamId();
-    const newTeam = {
-      id: teamId,
-      teamId: generatedTeamId,
-      teamName,
-      leaderId: userId,
-      problemStatementId: problemStatementId || null,
-      problemStatementTitle: problemStatementTitle || null,
-      members: [
-        {
-          userId: user.id,
-          name: user.name,
-          college: user.college,
-          role: 'Team Leader',
-          paymentStatus: user.paymentStatus,
-          profileCompleted: user.profileCompleted,
-          joinedAt: new Date().toISOString()
-        }
-      ],
-      status: 'active',
-      confirmationStatus: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
 
-    // Save team to database
-    await teamsRef.child(teamId).set(newTeam);
+    await query(
+      `INSERT INTO teams (id, team_id, team_name, leader_id, problem_statement_id, problem_statement_title, status, confirmation_status, round, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'active', 'pending', 1, NOW(), NOW())`,
+      [id, generatedTeamId, teamName, userId, problemStatementId || null, problemStatementTitle || null]
+    );
 
-    // Update user's teamId
-    await usersRef.child(userId).update({ teamId: generatedTeamId });
+    await query(
+      `INSERT INTO team_members (team_id, user_id, name, college, role, payment_status, profile_completed, joined_at)
+       VALUES ($1, $2, $3, $4, 'Team Leader', $5, $6, NOW())`,
+      [generatedTeamId, user.id, user.name, user.college, user.payment_status, user.profile_completed]
+    );
+
+    // Update user's team_id
+    await query('UPDATE users SET team_id = $1 WHERE id = $2', [generatedTeamId, userId]);
+
+    const newTeam = await fetchTeamByCode(generatedTeamId);
 
     res.status(201).json({
       success: true,
@@ -119,34 +139,24 @@ exports.joinTeam = async (req, res) => {
     }
 
     // Get current user
-    const userSnapshot = await usersRef.child(userId).once('value');
-    if (!userSnapshot.exists()) {
+    const userRes = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = userSnapshot.val();
+    const user = userRes.rows[0];
 
-    // Get team by querying teamId field (not Firebase key)
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Get team by CODE (team_id column)
+    const team = await fetchTeamByCode(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Invalid Team ID. Please check and try again.'
       });
     }
-
-    // Get the first (and only) matching team
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      team.id = teamKey; // Add Firebase key for updates
-      return true; // Stop after first match
-    });
 
     // Check if team is full
     if (team.members.length >= 6) {
@@ -157,7 +167,7 @@ exports.joinTeam = async (req, res) => {
     }
 
     // Check if user is already in this team
-    const alreadyInTeam = team.members.some(member => member.userId === userId);
+    const alreadyInTeam = team.members.some(member => String(member.userId) === String(userId));
     if (alreadyInTeam) {
       return res.status(400).json({
         success: false,
@@ -166,7 +176,7 @@ exports.joinTeam = async (req, res) => {
     }
 
     // Check if user is in another team
-    if (user.teamId && user.teamId !== teamId) {
+    if (user.team_id && user.team_id !== teamId) {
       return res.status(400).json({
         success: false,
         message: 'You are already in another team.'
@@ -174,33 +184,24 @@ exports.joinTeam = async (req, res) => {
     }
 
     // Add user to team
-    const newMember = {
-      userId: user.id,
-      name: user.name,
-      college: user.college,
-      role: 'Member',
-      paymentStatus: user.paymentStatus,
-      profileCompleted: user.profileCompleted,
-      joinedAt: new Date().toISOString()
-    };
+    await query(
+      `INSERT INTO team_members (team_id, user_id, name, college, role, payment_status, profile_completed, joined_at)
+       VALUES ($1, $2, $3, $4, 'Member', $5, $6, NOW())`,
+      [team.teamId, user.id, user.name, user.college, user.payment_status, user.profile_completed]
+    );
 
-    const updatedMembers = [...team.members, newMember];
-    const updatedTeam = {
-      ...team,
-      members: updatedMembers,
-      updatedAt: new Date().toISOString()
-    };
+    // Update user's team_id
+    await query('UPDATE users SET team_id = $1 WHERE id = $2', [team.teamId, userId]);
 
-    // Save updated team using Firebase key
-    await teamsRef.child(teamKey).set(updatedTeam);
+    // Update teams.updated_at
+    await query('UPDATE teams SET updated_at = NOW() WHERE team_id = $1', [team.teamId]);
 
-    // Update user's teamId
-    await usersRef.child(userId).update({ teamId: team.teamId });
+    const updatedTeam = await fetchTeamByCode(teamId);
 
     res.status(200).json({
       success: true,
       message: 'Joined team successfully',
-      data: { ...updatedTeam, id: teamKey }
+      data: updatedTeam
     });
   } catch (error) {
     console.error('Join team error:', error);
@@ -225,23 +226,14 @@ exports.getTeam = async (req, res) => {
       });
     }
 
-    // Query by teamId field
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Query by CODE (team_id column)
+    const team = await fetchTeamByCode(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
-
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      team.id = teamKey;
-      return true;
-    });
 
     res.status(200).json({
       success: true,
@@ -264,40 +256,31 @@ exports.getMyTeam = async (req, res) => {
     const userId = req.user.userId;
 
     // Get current user
-    const userSnapshot = await usersRef.child(userId).once('value');
-    if (!userSnapshot.exists()) {
+    const userRes = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = userSnapshot.val();
+    const user = userRes.rows[0];
 
-    if (!user.teamId) {
+    if (!user.team_id) {
       return res.status(200).json({
         success: true,
         data: null
       });
     }
 
-    // Query team by teamId field
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(user.teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Query team by CODE via users.team_id
+    const team = await fetchTeamByCode(user.team_id);
+    if (!team) {
       return res.status(200).json({
         success: true,
         data: null
       });
     }
-
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      team.id = teamKey;
-      return true;
-    });
 
     res.status(200).json({
       success: true,
@@ -320,25 +303,17 @@ exports.confirmTeam = async (req, res) => {
     const { teamId } = req.params;
     const userId = req.user.userId;
 
-    // Get team by querying teamId field
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Get team by CODE
+    const team = await fetchTeamByCode(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      return true;
-    });
-
     // Check if user is team leader
-    if (team.leaderId !== userId) {
+    if (String(team.leaderId) !== String(userId)) {
       return res.status(403).json({
         success: false,
         message: 'Only team leader can confirm the team'
@@ -354,19 +329,14 @@ exports.confirmTeam = async (req, res) => {
     }
 
     // Update team confirmation status
-    const updatedTeam = {
-      ...team,
-      confirmationStatus: 'confirmed',
-      updatedAt: new Date().toISOString()
-    };
+    await query("UPDATE teams SET confirmation_status = 'confirmed', updated_at = NOW() WHERE team_id = $1", [teamId]);
 
-    // Save updated team using Firebase key
-    await teamsRef.child(teamKey).set(updatedTeam);
+    const updatedTeam = await fetchTeamByCode(teamId);
 
     res.status(200).json({
       success: true,
       message: 'Team confirmed successfully',
-      data: { ...updatedTeam, id: teamKey }
+      data: updatedTeam
     });
   } catch (error) {
     console.error('Confirm team error:', error);
@@ -386,25 +356,17 @@ exports.updateTeamProblemStatement = async (req, res) => {
     const { psId, psTitle } = req.body;
     const userId = req.user.userId;
 
-    // Get team by querying teamId field
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Get team by CODE
+    const team = await fetchTeamByCode(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      return true;
-    });
-
     // Check if user is team leader
-    if (team.leaderId !== userId) {
+    if (String(team.leaderId) !== String(userId)) {
       return res.status(403).json({
         success: false,
         message: 'Only team leader can update problem statement'
@@ -412,20 +374,17 @@ exports.updateTeamProblemStatement = async (req, res) => {
     }
 
     // Update team
-    const updatedTeam = {
-      ...team,
-      problemStatementId: psId,
-      problemStatementTitle: psTitle,
-      updatedAt: new Date().toISOString()
-    };
+    await query(
+      'UPDATE teams SET problem_statement_id = $1, problem_statement_title = $2, updated_at = NOW() WHERE team_id = $3',
+      [psId !== undefined ? psId : null, psTitle !== undefined ? psTitle : null, teamId]
+    );
 
-    // Save updated team using Firebase key
-    await teamsRef.child(teamKey).set(updatedTeam);
+    const updatedTeam = await fetchTeamByCode(teamId);
 
     res.status(200).json({
       success: true,
       message: 'Problem statement updated successfully',
-      data: { ...updatedTeam, id: teamKey }
+      data: updatedTeam
     });
   } catch (error) {
     console.error('Update problem statement error:', error);
@@ -444,25 +403,17 @@ exports.leaveTeam = async (req, res) => {
     const { teamId } = req.params;
     const userId = req.user.userId;
 
-    // Get team by querying teamId field
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Get team by CODE
+    const team = await fetchTeamByCode(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      return true;
-    });
-
     // Check if user is team leader
-    if (team.leaderId === userId) {
+    if (String(team.leaderId) === String(userId)) {
       return res.status(400).json({
         success: false,
         message: 'Team leader cannot leave the team.'
@@ -470,23 +421,20 @@ exports.leaveTeam = async (req, res) => {
     }
 
     // Remove user from team
-    const updatedMembers = team.members.filter(member => member.userId !== userId);
-    const updatedTeam = {
-      ...team,
-      members: updatedMembers,
-      updatedAt: new Date().toISOString()
-    };
+    await query('DELETE FROM team_members WHERE team_id = $1 AND user_id = $2', [teamId, userId]);
 
-    // Save updated team using Firebase key
-    await teamsRef.child(teamKey).set(updatedTeam);
+    // Update user's team_id
+    await query('UPDATE users SET team_id = NULL WHERE id = $1', [userId]);
 
-    // Update user's teamId
-    await usersRef.child(userId).update({ teamId: null });
+    // Update teams.updated_at
+    await query('UPDATE teams SET updated_at = NOW() WHERE team_id = $1', [teamId]);
+
+    const updatedTeam = await fetchTeamByCode(teamId);
 
     res.status(200).json({
       success: true,
       message: 'Left team successfully',
-      data: { ...updatedTeam, id: teamKey }
+      data: updatedTeam
     });
   } catch (error) {
     console.error('Leave team error:', error);
@@ -505,25 +453,17 @@ exports.markTeamComplete = async (req, res) => {
     const { teamId } = req.params;
     const userId = req.user.userId;
 
-    // Get team by querying teamId field
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Get team by CODE
+    const team = await fetchTeamByCode(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      return true;
-    });
-
     // Check if user is team leader
-    if (team.leaderId !== userId) {
+    if (String(team.leaderId) !== String(userId)) {
       return res.status(403).json({
         success: false,
         message: 'Only team leader can mark team as complete'
@@ -539,19 +479,14 @@ exports.markTeamComplete = async (req, res) => {
     }
 
     // Update team status
-    const updatedTeam = {
-      ...team,
-      status: 'complete',
-      updatedAt: new Date().toISOString()
-    };
+    await query("UPDATE teams SET status = 'complete', updated_at = NOW() WHERE team_id = $1", [teamId]);
 
-    // Save updated team using Firebase key
-    await teamsRef.child(teamKey).set(updatedTeam);
+    const updatedTeam = await fetchTeamByCode(teamId);
 
     res.status(200).json({
       success: true,
       message: 'Team marked as complete successfully',
-      data: { ...updatedTeam, id: teamKey }
+      data: updatedTeam
     });
   } catch (error) {
     console.error('Mark team complete error:', error);
@@ -575,14 +510,18 @@ exports.getAllTeams = async (req, res) => {
       });
     }
 
-    const teamsSnapshot = await teamsRef.once('value');
-    const teams = teamsSnapshot.exists() ? teamsSnapshot.val() : {};
+    const teamsRes = await query('SELECT * FROM teams ORDER BY created_at DESC');
+    const membersRes = await query('SELECT * FROM team_members ORDER BY joined_at');
 
-    // Convert object to array
-    const teamsArray = Object.keys(teams).map(key => ({
-      ...teams[key],
-      id: key
-    }));
+    const membersByTeam = {};
+    for (const m of membersRes.rows) {
+      if (!membersByTeam[m.team_id]) membersByTeam[m.team_id] = [];
+      membersByTeam[m.team_id].push(m);
+    }
+
+    const teamsArray = teamsRes.rows.map((teamRow) =>
+      formatTeam(teamRow, membersByTeam[teamRow.team_id] || [])
+    );
 
     res.status(200).json({
       success: true,
@@ -613,38 +552,28 @@ exports.rejectTeam = async (req, res) => {
       });
     }
 
-    // Get team by querying teamId field
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Get team by CODE
+    const team = await fetchTeamByCode(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      return true;
-    });
-
     // Update team status
-    const updatedTeam = {
-      ...team,
-      status: 'rejected',
-      rejectionReason: reason,
-      updatedAt: new Date().toISOString()
-    };
+    await query('UPDATE teams SET status = $1, rejection_reason = $2, updated_at = NOW() WHERE team_id = $3', [
+      'rejected',
+      reason !== undefined ? reason : null,
+      teamId
+    ]);
 
-    // Save updated team using Firebase key
-    await teamsRef.child(teamKey).set(updatedTeam);
+    const updatedTeam = await fetchTeamByCode(teamId);
 
     res.status(200).json({
       success: true,
       message: 'Team rejected successfully',
-      data: { ...updatedTeam, id: teamKey }
+      data: updatedTeam
     });
   } catch (error) {
     console.error('Reject team error:', error);
@@ -679,37 +608,24 @@ exports.updateTeamRound = async (req, res) => {
       });
     }
 
-    // Get team by querying teamId field
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (!teamsSnapshot.exists()) {
+    // Get team by CODE
+    const team = await fetchTeamByCode(teamId);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    let team = null;
-    let teamKey = null;
-    teamsSnapshot.forEach((childSnapshot) => {
-      teamKey = childSnapshot.key;
-      team = childSnapshot.val();
-      return true;
-    });
-
     // Update team round
-    const updatedTeam = {
-      ...team,
-      round: round,
-      updatedAt: new Date().toISOString()
-    };
+    await query('UPDATE teams SET round = $1, updated_at = NOW() WHERE team_id = $2', [round, teamId]);
 
-    // Save updated team using Firebase key
-    await teamsRef.child(teamKey).set(updatedTeam);
+    const updatedTeam = await fetchTeamByCode(teamId);
 
     res.status(200).json({
       success: true,
       message: `Team promoted to Round ${round} successfully`,
-      data: { ...updatedTeam, id: teamKey }
+      data: updatedTeam
     });
   } catch (error) {
     console.error('Update team round error:', error);

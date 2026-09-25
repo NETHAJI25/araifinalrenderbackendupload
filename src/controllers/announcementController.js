@@ -1,22 +1,26 @@
-const firebaseAdmin = require('firebase-admin');
+const { v4: uuidv4 } = require('uuid');
+const { query } = require('../config/db');
 
-// Get Firebase Realtime Database reference
-const db = firebaseAdmin.database();
-const announcementsRef = db.ref('announcements');
+function formatAnnouncement(row) {
+  if (!row) return row;
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    priority: row.priority,
+    status: row.status,
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at,
+  };
+}
 
 /**
  * Get all announcements
  */
 exports.getAll = async (req, res) => {
   try {
-    const snapshot = await announcementsRef.once('value');
-    const announcements = snapshot.exists() ? snapshot.val() : {};
-
-    // Convert object to array and sort by createdAt descending
-    const announcementsArray = Object.keys(announcements).map(key => ({
-      ...announcements[key],
-      id: key
-    })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const result = await query('SELECT * FROM announcements ORDER BY created_at DESC');
+    const announcementsArray = result.rows.map(formatAnnouncement);
 
     res.status(200).json({
       success: true,
@@ -36,17 +40,8 @@ exports.getAll = async (req, res) => {
  */
 exports.getPublished = async (req, res) => {
   try {
-    const snapshot = await announcementsRef.once('value');
-    const announcements = snapshot.exists() ? snapshot.val() : {};
-
-    // Filter published announcements and sort by createdAt descending
-    const publishedAnnouncements = Object.keys(announcements)
-      .filter(key => announcements[key].status === 'published')
-      .map(key => ({
-        ...announcements[key],
-        id: key
-      }))
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const result = await query("SELECT * FROM announcements WHERE status = 'published' ORDER BY created_at DESC");
+    const publishedAnnouncements = result.rows.map(formatAnnouncement);
 
     res.status(200).json({
       success: true,
@@ -76,26 +71,15 @@ exports.create = async (req, res) => {
       });
     }
 
-    // Create new announcement
-    const newAnnouncement = {
-      title,
-      content,
-      priority: priority || 'Normal',
-      status: status || 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const id = uuidv4();
+    const result = await query(
+      `INSERT INTO announcements (id, title, content, priority, status)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [id, title, content, priority || 'Normal', status || 'published']
+    );
 
-    // Save to database
-    const newAnnouncementRef = announcementsRef.push();
-    await newAnnouncementRef.set(newAnnouncement);
-
-    // Get the saved announcement with ID
-    const savedSnapshot = await newAnnouncementRef.once('value');
-    const savedAnnouncement = {
-      ...savedSnapshot.val(),
-      id: savedSnapshot.key
-    };
+    const savedAnnouncement = formatAnnouncement(result.rows[0]);
 
     res.status(201).json({
       success: true,
@@ -127,34 +111,50 @@ exports.update = async (req, res) => {
     }
 
     // Get announcement
-    const announcementRef = announcementsRef.child(id);
-    const snapshot = await announcementRef.once('value');
-    if (!snapshot.exists()) {
+    const existing = await query('SELECT * FROM announcements WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Announcement not found'
       });
     }
 
-    const announcement = snapshot.val();
+    // Build dynamic SET clause for allowed fields
+    const fields = [];
+    const values = [];
+    let idx = 1;
 
-    // Update announcement
-    const updatedAnnouncement = {
-      ...announcement,
-      ...updates,
-      updatedAt: new Date().toISOString()
-    };
+    if (updates.title !== undefined) {
+      fields.push(`title = $${idx++}`);
+      values.push(updates.title);
+    }
+    if (updates.content !== undefined) {
+      fields.push(`content = $${idx++}`);
+      values.push(updates.content);
+    }
+    if (updates.priority !== undefined) {
+      fields.push(`priority = $${idx++}`);
+      values.push(updates.priority);
+    }
+    if (updates.status !== undefined) {
+      fields.push(`status = $${idx++}`);
+      values.push(updates.status);
+    }
 
-    // Save updated announcement
-    await announcementRef.set(updatedAnnouncement);
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+
+    const result = await query(
+      `UPDATE announcements SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+
+    const updatedAnnouncement = formatAnnouncement(result.rows[0]);
 
     res.status(200).json({
       success: true,
       message: 'Announcement updated successfully',
-      data: {
-        ...updatedAnnouncement,
-        id
-      }
+      data: updatedAnnouncement
     });
   } catch (error) {
     console.error('Update announcement error:', error);
@@ -180,9 +180,8 @@ exports.delete = async (req, res) => {
     }
 
     // Check if announcement exists
-    const announcementRef = announcementsRef.child(id);
-    const snapshot = await announcementRef.once('value');
-    if (!snapshot.exists()) {
+    const existing = await query('SELECT id FROM announcements WHERE id = $1', [id]);
+    if (existing.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Announcement not found'
@@ -190,7 +189,7 @@ exports.delete = async (req, res) => {
     }
 
     // Delete announcement
-    await announcementRef.remove();
+    await query('DELETE FROM announcements WHERE id = $1', [id]);
 
     res.status(200).json({
       success: true,

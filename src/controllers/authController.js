@@ -2,17 +2,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const validator = require('validator');
-const firebaseAdmin = require('firebase-admin');
+const { query } = require('../config/db');
 const eventConfig = require('../config/eventConfig');
-
-// Get Firebase Realtime Database reference
-const db = firebaseAdmin.database();
-const authRef = db.ref('auth');
-const usersRef = db.ref('users');
-const teamsRef = db.ref('teams');
-const announcementsRef = db.ref('announcements');
-const paymentsRef = db.ref('payments');
-const submissionsRef = db.ref('submissions');
 
 /**
  * Generate JWT token
@@ -49,6 +40,33 @@ const validatePassword = (password) => {
 };
 
 /**
+ * Map a DB row (snake_case) to a camelCase API object (never includes password)
+ * @param {Object} row - pg row from users table
+ * @returns {Object} API user object
+ */
+const mapUserRow = (row) => {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    college: row.college,
+    course: row.course,
+    year: row.year,
+    city: row.city,
+    state: row.state,
+    country: row.country,
+    linkedin: row.linkedin,
+    github: row.github,
+    profileCompleted: row.profile_completed,
+    paymentStatus: row.payment_status,
+    teamId: row.team_id,
+    role: row.role,
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at
+  };
+};
+
+/**
  * Register a new user
  */
 exports.register = async (req, res) => {
@@ -79,8 +97,8 @@ exports.register = async (req, res) => {
     }
 
     // Check if user already exists
-    const snapshot = await usersRef.orderByChild('email').equalTo(email.toLowerCase()).once('value');
-    if (snapshot.exists()) {
+    const existing = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (existing.rows.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'User with this email already exists'
@@ -102,35 +120,35 @@ exports.register = async (req, res) => {
 
     // Create new user
     const userId = uuidv4();
-    const newUser = {
-      id: userId,
-      name,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      phone,
-      college,
-      course,
-      year,
-      city,
-      state,
-      country: country || 'India',
-      profileCompleted: false,
-      paymentStatus: 'pending',
-      teamId: null,
-      role,
-      linkedin: linkedin || null,
-      github: github || null,
-      createdAt: new Date().toISOString()
-    };
+    const result = await query(
+      `INSERT INTO users (id, name, email, password, phone, college, course, year, city, state, country, linkedin, github, profile_completed, payment_status, team_id, role)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       RETURNING *`,
+      [
+        userId,
+        name,
+        email.toLowerCase(),
+        hashedPassword,
+        phone,
+        college,
+        course,
+        year,
+        city,
+        state,
+        country || 'India',
+        linkedin || null,
+        github || null,
+        false,
+        'pending',
+        null,
+        role
+      ]
+    );
 
-    // Save user to database
-    await usersRef.child(userId).set(newUser);
-
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = newUser;
+    const userWithoutPassword = mapUserRow(result.rows[0]);
 
     // Generate token
-    const token = generateToken(newUser);
+    const token = generateToken({ id: userId, email: email.toLowerCase(), role });
 
     res.status(201).json({
       success: true,
@@ -171,20 +189,15 @@ exports.login = async (req, res) => {
     }
 
     // Find user by email
-    const snapshot = await usersRef.orderByChild('email').equalTo(email.toLowerCase()).once('value');
-    if (!snapshot.exists()) {
+    const result = await query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (result.rows.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
-    let user = null;
-    let userId = null;
-    snapshot.forEach((childSnapshot) => {
-      userId = childSnapshot.key;
-      user = childSnapshot.val();
-    });
+    const user = result.rows[0];
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
@@ -196,10 +209,10 @@ exports.login = async (req, res) => {
     }
 
     // Remove password from user object
-    const { password: _, ...userWithoutPassword } = user;
+    const userWithoutPassword = mapUserRow(user);
 
     // Generate token
-    const token = generateToken(user);
+    const token = generateToken({ id: user.id, email: user.email, role: user.role });
 
     res.status(200).json({
       success: true,
@@ -225,17 +238,15 @@ exports.getCurrentUser = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const snapshot = await usersRef.child(userId).once('value');
-    if (!snapshot.exists()) {
+    const result = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = snapshot.val();
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const userWithoutPassword = mapUserRow(result.rows[0]);
 
     res.status(200).json({
       success: true,
@@ -272,14 +283,10 @@ exports.getAllUsers = async (req, res) => {
       });
     }
 
-    const snapshot = await usersRef.once('value');
-    const users = snapshot.exists() ? snapshot.val() : {};
+    const result = await query('SELECT * FROM users ORDER BY created_at DESC');
 
-    // Convert to array, strip passwords, sort newest first
-    const usersArray = Object.keys(users).map((key) => {
-      const { password: _, ...userWithoutPassword } = users[key];
-      return { ...userWithoutPassword, id: key };
-    }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    // Strip passwords (mapUserRow never includes password)
+    const usersArray = result.rows.map((row) => mapUserRow(row));
 
     res.status(200).json({
       success: true,
@@ -300,20 +307,73 @@ exports.getAllUsers = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const updates = req.body;
+    const updates = { ...req.body };
 
     // Remove sensitive fields that shouldn't be updated via this endpoint
     delete updates.password;
     delete updates.email;
     delete updates.role;
 
-    // Update user
-    await usersRef.child(userId).update(updates);
+    // Map camelCase API fields to snake_case DB columns
+    const fieldMap = {
+      name: 'name',
+      phone: 'phone',
+      college: 'college',
+      course: 'course',
+      year: 'year',
+      city: 'city',
+      state: 'state',
+      country: 'country',
+      linkedin: 'linkedin',
+      github: 'github',
+      profileCompleted: 'profile_completed',
+      paymentStatus: 'payment_status',
+      teamId: 'team_id',
+      profile_completed: 'profile_completed',
+      payment_status: 'payment_status',
+      team_id: 'team_id'
+    };
 
-    // Get updated user
-    const snapshot = await usersRef.child(userId).once('value');
-    const user = snapshot.val();
-    const { password: _, ...userWithoutPassword } = user;
+    const setClauses = [];
+    const values = [];
+    let paramIndex = 1;
+
+    for (const [key, value] of Object.entries(updates)) {
+      const column = fieldMap[key];
+      if (column) {
+        setClauses.push(`${column} = $${paramIndex}`);
+        values.push(value);
+        paramIndex += 1;
+      }
+    }
+
+    let updatedRow;
+    if (setClauses.length > 0) {
+      values.push(userId);
+      const result = await query(
+        `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+        values
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      updatedRow = result.rows[0];
+    } else {
+      // No updatable fields provided — just fetch current user
+      const result = await query('SELECT * FROM users WHERE id = $1', [userId]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      updatedRow = result.rows[0];
+    }
+
+    const userWithoutPassword = mapUserRow(updatedRow);
 
     res.status(200).json({
       success: true,

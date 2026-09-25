@@ -1,11 +1,22 @@
 const { v4: uuidv4 } = require('uuid');
-const firebaseAdmin = require('firebase-admin');
+const { query } = require('../config/db');
 const { generateSubmissionId } = require('../utils/idGenerator');
 
-// Get Firebase Realtime Database reference
-const db = firebaseAdmin.database();
-const submissionsRef = db.ref('submissions');
-const teamsRef = db.ref('teams');
+function formatSubmission(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    submissionId: row.submission_id,
+    teamId: row.team_id,
+    projectName: row.project_name,
+    description: row.description,
+    presentationUrl: row.presentation_url,
+    codeUrl: row.code_url,
+    demoVideoUrl: row.demo_video_url,
+    status: row.status,
+    submittedAt: row.submitted_at instanceof Date ? row.submitted_at.toISOString() : row.submitted_at,
+  };
+}
 
 /**
  * Submit project
@@ -23,30 +34,28 @@ exports.submitProject = async (req, res) => {
       });
     }
 
-    // Get current user
-    const userSnapshot = await usersRef.child(userId).once('value');
-    if (!userSnapshot.exists()) {
+    // Get current user (fixed: proper SQL lookup instead of undefined usersRef)
+    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = userSnapshot.val();
-
-    // Get team
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team by CODE
+    const teamResult = await query('SELECT * FROM teams WHERE team_id = $1', [teamId]);
+    if (teamResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    const team = teamResult.rows[0];
 
     // Check if user is team leader
-    if (team.leaderId !== userId) {
+    if (team.leader_id !== userId) {
       return res.status(403).json({
         success: false,
         message: 'Only team leader can submit the project'
@@ -54,15 +63,16 @@ exports.submitProject = async (req, res) => {
     }
 
     // Check if team is confirmed
-    if (team.confirmationStatus !== 'confirmed') {
+    if (team.confirmation_status !== 'confirmed') {
       return res.status(400).json({
         success: false,
         message: 'Team must be confirmed before submitting project'
       });
     }
 
-    // Check if team has paid
-    const allPaid = team.members.every(member => member.paymentStatus === 'paid');
+    // Check if all team members have paid
+    const membersResult = await query('SELECT payment_status FROM team_members WHERE team_id = $1', [team.team_id]);
+    const allPaid = membersResult.rows.every(member => member.payment_status === 'paid');
     if (!allPaid) {
       return res.status(400).json({
         success: false,
@@ -71,8 +81,8 @@ exports.submitProject = async (req, res) => {
     }
 
     // Check if team already has a submission
-    const submissionsSnapshot = await submissionsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    if (submissionsSnapshot.exists()) {
+    const existingResult = await query('SELECT id FROM submissions WHERE team_id = $1 LIMIT 1', [team.team_id]);
+    if (existingResult.rows.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'This team has already submitted a project.'
@@ -80,23 +90,26 @@ exports.submitProject = async (req, res) => {
     }
 
     // Create new submission
-    const submissionId = uuidv4();
+    const id = uuidv4();
     const generatedSubmissionId = generateSubmissionId();
-    const newSubmission = {
-      id: submissionId,
-      submissionId: generatedSubmissionId,
-      teamId: team.id,
-      projectName,
-      description: description || '',
-      presentationUrl: presentationUrl || null,
-      codeUrl: codeUrl || null,
-      demoVideoUrl: demoVideoUrl || null,
-      status: 'submitted',
-      submittedAt: new Date().toISOString()
-    };
 
-    // Save submission to database
-    await submissionsRef.child(submissionId).set(newSubmission);
+    const insertResult = await query(
+      `INSERT INTO submissions (id, submission_id, team_id, project_name, description, presentation_url, code_url, demo_video_url, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'submitted')
+       RETURNING *`,
+      [
+        id,
+        generatedSubmissionId,
+        team.team_id,
+        projectName,
+        description || '',
+        presentationUrl || null,
+        codeUrl || null,
+        demoVideoUrl || null
+      ]
+    );
+
+    const newSubmission = formatSubmission(insertResult.rows[0]);
 
     res.status(201).json({
       success: true,
@@ -126,21 +139,13 @@ exports.getMySubmission = async (req, res) => {
       });
     }
 
-    const submissionsSnapshot = await submissionsRef.orderByChild('teamId').equalTo(teamId).once('value');
-    const submissions = submissionsSnapshot.exists() ? submissionsSnapshot.val() : {};
+    const result = await query('SELECT * FROM submissions WHERE team_id = $1 LIMIT 1', [teamId]);
 
-    // Get the submission
-    let submission = null;
-    let submissionId = null;
-
-    Object.keys(submissions).forEach(key => {
-      submission = submissions[key];
-      submissionId = key;
-    });
+    const submission = result.rows.length > 0 ? formatSubmission(result.rows[0]) : null;
 
     res.status(200).json({
       success: true,
-      data: submission ? { ...submission, id: submissionId } : null
+      data: submission
     });
   } catch (error) {
     console.error('Get my submission error:', error);
@@ -168,52 +173,78 @@ exports.updateSubmission = async (req, res) => {
     }
 
     // Get submission
-    const submissionRef = submissionsRef.child(submissionId);
-    const snapshot = await submissionRef.once('value');
-    if (!snapshot.exists()) {
+    const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
+    if (submissionResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Submission not found'
       });
     }
 
-    const submission = snapshot.val();
+    const submission = submissionResult.rows[0];
 
-    // Get team to verify user is team leader
-    const teamSnapshot = await teamsRef.child(submission.teamId).once('value');
-    if (!teamSnapshot.exists()) {
+    // Get team (by row's team_id code) to verify user is team leader
+    const teamResult = await query('SELECT * FROM teams WHERE team_id = $1', [submission.team_id]);
+    if (teamResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    const team = teamResult.rows[0];
 
     // Check if user is team leader
-    if (team.leaderId !== userId) {
+    if (team.leader_id !== userId) {
       return res.status(403).json({
         success: false,
         message: 'Only team leader can update the submission'
       });
     }
 
-    // Update submission
-    const updatedSubmission = {
-      ...submission,
-      ...updates
+    // Map camelCase body keys to columns
+    const columnMap = {
+      projectName: 'project_name',
+      description: 'description',
+      presentationUrl: 'presentation_url',
+      codeUrl: 'code_url',
+      demoVideoUrl: 'demo_video_url',
+      status: 'status'
     };
 
-    // Save updated submission
-    await submissionRef.set(updatedSubmission);
+    const fields = [];
+    const values = [];
+    let idx = 1;
+
+    for (const [camelKey, column] of Object.entries(columnMap)) {
+      if (updates[camelKey] !== undefined) {
+        fields.push(`${column} = $${idx++}`);
+        values.push(updates[camelKey]);
+      }
+    }
+
+    if (fields.length === 0) {
+      // Nothing to update — return current row as-is
+      return res.status(200).json({
+        success: true,
+        message: 'Submission updated successfully',
+        data: formatSubmission(submission)
+      });
+    }
+
+    values.push(submissionId);
+
+    const updateResult = await query(
+      `UPDATE submissions SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+
+    const updatedSubmission = formatSubmission(updateResult.rows[0]);
 
     res.status(200).json({
       success: true,
       message: 'Submission updated successfully',
-      data: {
-        ...updatedSubmission,
-        id: submissionId
-      }
+      data: updatedSubmission
     });
   } catch (error) {
     console.error('Update submission error:', error);
@@ -237,14 +268,8 @@ exports.getAll = async (req, res) => {
       });
     }
 
-    const submissionsSnapshot = await submissionsRef.once('value');
-    const submissions = submissionsSnapshot.exists() ? submissionsSnapshot.val() : {};
-
-    // Convert object to array and sort by submittedAt descending
-    const submissionsArray = Object.keys(submissions).map(key => ({
-      ...submissions[key],
-      id: key
-    })).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+    const result = await query('SELECT * FROM submissions ORDER BY submitted_at DESC');
+    const submissionsArray = result.rows.map(formatSubmission);
 
     res.status(200).json({
       success: true,

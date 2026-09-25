@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const firebaseAdmin = require('firebase-admin');
-const { sendContactNotification, verifyMailConfig } = require('../utils/mailer');
+const { v4: uuidv4 } = require('uuid');
+const { query } = require('../config/db');
+const { sendContactNotification } = require('../utils/mailer');
+const { verifyMailConfig } = require('../utils/mailer');
 
 // GET /api/contact/mail-status - check SMTP config (no secrets exposed)
 router.get('/mail-status', async (req, res) => {
@@ -34,20 +36,12 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Store in Firebase RTDB under /contacts
-    const db = firebaseAdmin.database();
-    const contactsRef = db.ref('contacts');
-    
-    const newContact = {
-      name,
-      email,
-      subject,
-      message,
-      createdAt: new Date().toISOString(),
-      status: 'new'
-    };
-
-    await contactsRef.push(newContact);
+    // Store in Postgres contacts table
+    const contactId = uuidv4();
+    await query(
+      `INSERT INTO contacts (id, name, email, subject, message, status) VALUES ($1, $2, $3, $4, $5, 'new')`,
+      [contactId, name, email, subject, message]
+    );
 
     // Send email notification to admin (non-blocking — form succeeds even if mail fails)
     let emailSent = false;

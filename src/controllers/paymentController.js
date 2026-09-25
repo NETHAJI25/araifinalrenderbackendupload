@@ -1,44 +1,35 @@
 const { v4: uuidv4 } = require('uuid');
-const firebaseAdmin = require('firebase-admin');
-const bcrypt = require('bcryptjs');
+const { query } = require('../config/db');
 
-// Get Firebase Realtime Database reference
-const db = firebaseAdmin.database();
-const paymentsRef = db.ref('payments');
-const usersRef = db.ref('users');
-const teamsRef = db.ref('teams');
+/**
+ * Map a Postgres payments row (snake_case) to the API shape (camelCase).
+ */
+function formatPayment(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    userId: row.user_id,
+    amount: row.amount,
+    currency: row.currency,
+    status: row.status,
+    reference: row.reference || null,
+    createdAt:
+      row.created_at instanceof Date
+        ? row.created_at.toISOString()
+        : new Date(row.created_at).toISOString(),
+    updatedAt:
+      row.updated_at instanceof Date
+        ? row.updated_at.toISOString()
+        : new Date(row.updated_at).toISOString()
+  };
+}
 
 /**
  * Sync a user's paid status into their team member entry
  */
 async function syncTeamMemberPayment(userId) {
   try {
-    const userSnapshot = await usersRef.child(userId).once('value');
-    if (!userSnapshot.exists()) return;
-    const user = userSnapshot.val();
-    if (!user || !user.teamId) return;
-
-    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(user.teamId).once('value');
-    if (!teamsSnapshot.exists()) return;
-
-    const updates = [];
-    teamsSnapshot.forEach((childSnapshot) => {
-      const teamKey = childSnapshot.key;
-      const team = childSnapshot.val();
-      const memberIdx = (team.members || []).findIndex((m) => m.userId === userId);
-      if (memberIdx >= 0 && team.members[memberIdx].paymentStatus !== 'paid') {
-        updates.push(
-          teamsRef.child(teamKey).child('members').child(memberIdx).update({
-            paymentStatus: 'paid'
-          })
-        );
-        updates.push(
-          teamsRef.child(teamKey).update({ updatedAt: new Date().toISOString() })
-        );
-      }
-      return true;
-    });
-    await Promise.all(updates);
+    await query(`UPDATE team_members SET payment_status='paid' WHERE user_id=$1`, [userId]);
   } catch (err) {
     console.error('syncTeamMemberPayment error:', err);
   }
@@ -52,29 +43,23 @@ exports.createPayment = async (req, res) => {
     const userId = req.user.userId;
 
     // Get current user
-    const userSnapshot = await usersRef.child(userId).once('value');
-    if (!userSnapshot.exists()) {
+    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = userSnapshot.val();
+    const user = userResult.rows[0];
 
     // Check if user already has a completed payment
-    const paymentsSnapshot = await paymentsRef.orderByChild('userId').equalTo(userId).once('value');
-    let hasPaidPayment = false;
-    paymentsSnapshot.forEach((paymentSnapshot) => {
-      const payment = paymentSnapshot.val();
-      if (payment.status === 'paid') {
-        hasPaidPayment = true;
-        return true;
-      }
-      return false;
-    });
+    const paidResult = await query(
+      "SELECT id FROM payments WHERE user_id = $1 AND status = 'paid' LIMIT 1",
+      [userId]
+    );
 
-    if (hasPaidPayment) {
+    if (paidResult.rows.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'Payment already completed'
@@ -83,6 +68,7 @@ exports.createPayment = async (req, res) => {
 
     // Create new payment
     const paymentId = uuidv4();
+    const now = new Date().toISOString();
     const newPayment = {
       id: paymentId,
       userId: user.id,
@@ -90,30 +76,29 @@ exports.createPayment = async (req, res) => {
       currency: 'INR',
       status: 'processing',
       reference: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: now,
+      updatedAt: now
     };
 
     // Save payment to database
-    await paymentsRef.child(paymentId).set(newPayment);
+    await query(
+      `INSERT INTO payments (id, user_id, amount, currency, status, reference) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [paymentId, user.id, 200, 'INR', 'processing', null]
+    );
 
     // Simulate async payment verification (in real implementation, this would be webhook from Razorpay)
     setTimeout(async () => {
       try {
-        const paymentRef = paymentsRef.child(paymentId);
-        const paymentSnapshot = await paymentRef.once('value');
-        if (paymentSnapshot.exists()) {
-          const payment = paymentSnapshot.val();
-          const updatedPayment = {
-            ...payment,
-            status: 'paid',
-            reference: `REF${Date.now()}`,
-            updatedAt: new Date().toISOString()
-          };
-          await paymentRef.set(updatedPayment);
+        const paymentResult = await query('SELECT * FROM payments WHERE id = $1', [paymentId]);
+        if (paymentResult.rows.length > 0) {
+          const reference = `REF${Date.now()}`;
+          await query(
+            `UPDATE payments SET status = 'paid', reference = $1, updated_at = NOW() WHERE id = $2`,
+            [reference, paymentId]
+          );
 
           // Update user's payment status
-          await usersRef.child(userId).update({ paymentStatus: 'paid' });
+          await query(`UPDATE users SET payment_status = 'paid' WHERE id = $1`, [userId]);
 
           // Sync team member entry
           await syncTeamMemberPayment(userId);
@@ -142,7 +127,7 @@ exports.createPayment = async (req, res) => {
  */
 exports.getPaymentById = async (req, res) => {
   try {
-    const { paymentId } = req.params;
+    const paymentId = req.params.paymentId || req.params.id;
 
     if (!paymentId) {
       return res.status(400).json({
@@ -151,15 +136,15 @@ exports.getPaymentById = async (req, res) => {
       });
     }
 
-    const paymentSnapshot = await paymentsRef.child(paymentId).once('value');
-    if (!paymentSnapshot.exists()) {
+    const paymentResult = await query('SELECT * FROM payments WHERE id = $1', [paymentId]);
+    if (paymentResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Payment not found'
       });
     }
 
-    const payment = paymentSnapshot.val();
+    const payment = formatPayment(paymentResult.rows[0]);
 
     res.status(200).json({
       success: true,
@@ -182,30 +167,22 @@ exports.getMyPayment = async (req, res) => {
     const userId = req.user.userId;
 
     // Get current user
-    const userSnapshot = await usersRef.child(userId).once('value');
-    if (!userSnapshot.exists()) {
+    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    // Get user's payments
-    const paymentsSnapshot = await paymentsRef.orderByChild('userId').equalTo(userId).once('value');
-    const payments = paymentsSnapshot.exists() ? paymentsSnapshot.val() : {};
-
     // Get the most recent payment
-    let latestPayment = null;
-    let latestTimestamp = 0;
+    const paymentsResult = await query(
+      'SELECT * FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [userId]
+    );
 
-    Object.keys(payments).forEach(key => {
-      const payment = payments[key];
-      const timestamp = new Date(payment.createdAt).getTime();
-      if (timestamp > latestTimestamp) {
-        latestTimestamp = timestamp;
-        latestPayment = { ...payment, id: key };
-      }
-    });
+    const latestPayment =
+      paymentsResult.rows.length > 0 ? formatPayment(paymentsResult.rows[0]) : null;
 
     res.status(200).json({
       success: true,
@@ -228,70 +205,55 @@ exports.mockCompletePay = async (req, res) => {
     const userId = req.user.userId;
 
     // Get current user
-    const userSnapshot = await usersRef.child(userId).once('value');
-    if (!userSnapshot.exists()) {
+    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = userSnapshot.val();
+    const userRow = userResult.rows[0];
+    const user = userRow;
 
-    // Get user's payments
-    const paymentsSnapshot = await paymentsRef.orderByChild('userId').equalTo(userId).once('value');
-    const payments = paymentsSnapshot.exists() ? paymentsSnapshot.val() : {};
+    // Get user's most recent payment
+    const paymentsResult = await query(
+      'SELECT * FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [userId]
+    );
 
-    let paymentId = null;
     let payment = null;
 
-    // Find existing payment
-    Object.keys(payments).forEach(key => {
-      const p = payments[key];
-      if (p.userId === userId) {
-        paymentId = key;
-        payment = p;
-      }
-    });
-
-    if (payment) {
+    if (paymentsResult.rows.length > 0) {
       // Update existing payment
-      const updatedPayment = {
-        ...payment,
-        status: 'paid',
-        reference: `REF${Date.now()}`,
-        updatedAt: new Date().toISOString()
-      };
-      await paymentsRef.child(paymentId).set(updatedPayment);
+      const existing = paymentsResult.rows[0];
+      const reference = `REF${Date.now()}`;
+      const updateResult = await query(
+        `UPDATE payments SET status = 'paid', reference = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+        [reference, existing.id]
+      );
+      payment = formatPayment(updateResult.rows[0]);
 
       // Update user's payment status
-      await usersRef.child(userId).update({ paymentStatus: 'paid' });
+      await query(`UPDATE users SET payment_status = 'paid' WHERE id = $1`, [userId]);
 
       // Sync team member entry
-      await syncTeamMemberPayment(userId);
+      await query(`UPDATE team_members SET payment_status = 'paid' WHERE user_id = $1`, [userId]);
     } else {
       // Create new payment
-      paymentId = uuidv4();
-      const newPayment = {
-        id: paymentId,
-        userId: user.id,
-        amount: 200,
-        currency: 'INR',
-        status: 'paid',
-        reference: `REF${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      await paymentsRef.child(paymentId).set(newPayment);
+      const paymentId = uuidv4();
+      const reference = `REF${Date.now()}`;
+      const insertResult = await query(
+        `INSERT INTO payments (id, user_id, amount, currency, status, reference) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [paymentId, user.id, 200, 'INR', 'paid', reference]
+      );
+      payment = formatPayment(insertResult.rows[0]);
 
       // Update user's payment status
-      await usersRef.child(userId).update({ paymentStatus: 'paid' });
+      await query(`UPDATE users SET payment_status = 'paid' WHERE id = $1`, [userId]);
 
       // Sync team member entry
-      await syncTeamMemberPayment(userId);
-
-      payment = newPayment;
+      await query(`UPDATE team_members SET payment_status = 'paid' WHERE user_id = $1`, [userId]);
     }
 
     res.status(200).json({

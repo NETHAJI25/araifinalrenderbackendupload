@@ -1,9 +1,5 @@
 const jwt = require('jsonwebtoken');
-const firebaseAdmin = require('firebase-admin');
-
-// Get Firebase Realtime Database reference
-const db = firebaseAdmin.database();
-const usersRef = db.ref('users');
+const { query } = require('../config/db');
 
 /**
  * Authentication middleware
@@ -30,8 +26,8 @@ exports.authenticate = async (req, res, next) => {
     };
 
     // Verify user still exists in database
-    const userSnapshot = await usersRef.child(decoded.userId).once('value');
-    if (!userSnapshot.exists()) {
+    const result = await query('SELECT id FROM users WHERE id = $1', [decoded.userId]);
+    if (result.rows.length === 0) {
       return res.status(401).json({
         success: false,
         message: 'User not found'
@@ -88,22 +84,20 @@ exports.authorizeTeamLeader = async (req, res, next) => {
       });
     }
 
-    // Get team
-    const db = firebaseAdmin.database();
-    const teamsRef = db.ref('teams');
-    const teamSnapshot = await teamsRef.child(teamId).once('value');
+    // Get team by CODE (team_id column, not Firebase key)
+    const result = await query('SELECT * FROM teams WHERE team_id = $1', [teamId]);
 
-    if (!teamSnapshot.exists()) {
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
 
-    const team = teamSnapshot.val();
+    const team = result.rows[0];
 
     // Check if user is team leader
-    if (team.leaderId !== userId) {
+    if (team.leader_id !== userId) {
       return res.status(403).json({
         success: false,
         message: 'Access denied. Team leader privileges required.'

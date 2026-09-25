@@ -1,5 +1,4 @@
 const express = require('express');
-const firebaseAdmin = require('firebase-admin');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -8,6 +7,9 @@ const path = require('path');
 
 // Load environment variables
 dotenv.config();
+
+// Supabase Postgres pool (lazy — connects on first query)
+const { pool } = require('./src/config/db');
 
 // Initialize Express app
 const app = express();
@@ -39,36 +41,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Initialize Firebase Admin
-try {
-  // Normalize the private key: handle literal \n, actual newlines, or escaped \\n
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
-  privateKey = privateKey.replace(/\\n/g, '\n'); // convert literal \n to real newlines
-  privateKey = privateKey.replace(/^"|"$/g, ''); // strip wrapping quotes
-
-  const serviceAccount = {
-    type: process.env.FIREBASE_TYPE,
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    private_key: privateKey,
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: process.env.FIREBASE_AUTH_URI,
-    token_uri: process.env.FIREBASE_TOKEN_URI,
-    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
-  };
-
-  firebaseAdmin.initializeApp({
-    credential: firebaseAdmin.credential.cert(serviceAccount),
-    databaseURL: process.env.FIREBASE_DATABASE_URL
-  });
-
-  console.log('Firebase Admin initialized successfully');
-} catch (error) {
-  console.error('Firebase Admin initialization error:', error);
-  process.exit(1);
-}
+// Verify Supabase Postgres connectivity (non-fatal — pool connects lazily per query)
+(async () => {
+  if (!process.env.DATABASE_URL) {
+    console.warn('DATABASE_URL not set — database queries will fail until configured');
+    return;
+  }
+  try {
+    await pool.query('SELECT 1');
+    console.log('Supabase Postgres connected successfully');
+  } catch (error) {
+    console.error('Postgres connection check failed (will retry per query):', error.message);
+  }
+})();
 
 // Health check endpoint
 app.get('/health', (req, res) => {
