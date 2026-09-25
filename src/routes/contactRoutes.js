@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const firebaseAdmin = require('firebase-admin');
+const { sendContactNotification } = require('../utils/mailer');
 
 // POST /api/contact - Submit contact form
 router.post('/', async (req, res) => {
@@ -38,10 +39,15 @@ router.post('/', async (req, res) => {
 
     await contactsRef.push(newContact);
 
-    // TODO: Send email notification to admin (Contact11induskiller@gmail.com)
-    // This would require a separate email service like SendGrid, Nodemailer, etc.
-    
-    console.log('New contact form submission:', { name, email, subject });
+    // Send email notification to admin (non-blocking — form succeeds even if mail fails)
+    let emailSent = false;
+    try {
+      emailSent = await sendContactNotification({ name, email, subject, message });
+    } catch (mailErr) {
+      console.error('[MAIL] Failed to send contact notification:', mailErr.message);
+    }
+
+    console.log('New contact form submission:', { name, email, subject, emailSent });
 
     res.status(201).json({
       success: true,
