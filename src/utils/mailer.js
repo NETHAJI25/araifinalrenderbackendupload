@@ -1,5 +1,10 @@
 const nodemailer = require('nodemailer');
 
+// Render's egress has no IPv6 route to Gmail — force IPv4 DNS first
+try {
+  require('dns').setDefaultResultOrder('ipv4first');
+} catch {}
+
 let transporter = null;
 
 function getTransporter() {
