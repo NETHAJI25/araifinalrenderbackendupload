@@ -371,9 +371,12 @@ function OrganizersSection() {
           <SectionHeader eyebrow="Organizing Team" title="Meet the Team" />
         </motion.div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {organizers.map((org, i) => (
+          {organizers.map((org, i) => {
+            // Center the orphan last card on desktop (lg 4-col grid) — mobile/tablet unchanged
+            const isOrphanLast = i === organizers.length - 1 && organizers.length % 4 === 1;
+            return (
             <motion.div key={org.id} {...useFadeUp(i)}
-              className="card p-6 flex flex-col items-center text-center hover:border-violet-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full max-w-[340px] mx-auto min-h-[280px]">
+              className={`card p-6 flex flex-col items-center text-center hover:border-violet-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full max-w-[340px] mx-auto min-h-[280px]${isOrphanLast ? " lg:col-start-2 lg:col-span-2" : ""}`}>
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-violet-100 mb-5 bg-gray-100 shadow-md">
                 <img src={org.photo} alt={org.name} className="w-full h-full object-cover" />
               </div>
@@ -386,7 +389,8 @@ function OrganizersSection() {
                 <ExternalLink className="w-3.5 h-3.5" /> LinkedIn
               </a>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

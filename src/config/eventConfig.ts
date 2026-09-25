@@ -40,7 +40,7 @@ export const eventConfig = {
     codeOfConduct: "#",
     refundPolicy: "#",
   },
-  whatsappGroupUrl: "https://chat.whatsapp.com/BNR98dq3UKiBJV8pZTufl7",
+  whatsappGroupUrl: "https://chat.whatsapp.com/Hwfr2VHCcrnJ0bsF5eSYRN",
   adminEmails: [
     "Contact11induskiller@gmail.com",
     "aravindmuthiah23@gmail.com"

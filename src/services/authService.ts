@@ -156,6 +156,19 @@ export const authService = {
     return updated;
   },
 
+  async getAllUsers(): Promise<User[]> {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const res = await fetch(`${API_URL}/api/auth/users`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to fetch users");
+    return data.data;
+  },
+
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   },

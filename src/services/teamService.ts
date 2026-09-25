@@ -104,9 +104,8 @@ export const teamService = {
       return team;
     }
 
-    const data = await apiFetch("/api/teams/join", {
+    const data = await apiFetch(`/api/teams/join/${teamId}`, {
       method: "POST",
-      body: JSON.stringify({ teamId }),
     });
     authService.updateCurrentUser({ teamId: data.data.teamId });
     return data.data;
@@ -211,7 +210,7 @@ export const teamService = {
     }
 
     await apiFetch(`/api/teams/${teamId}/leave`, {
-      method: "POST",
+      method: "DELETE",
     });
     authService.updateCurrentUser({ teamId: null });
   },
@@ -248,7 +247,7 @@ export const teamService = {
       return raw ? JSON.parse(raw) : [];
     }
 
-    const data = await apiFetch("/api/admin/teams");
+    const data = await apiFetch("/api/teams");
     return data.data;
   },
 
@@ -268,7 +267,7 @@ export const teamService = {
       return team;
     }
 
-    const data = await apiFetch(`/api/admin/teams/${teamId}/reject`, {
+    const data = await apiFetch(`/api/teams/${teamId}/reject`, {
       method: "POST",
       body: JSON.stringify({ reason }),
     });
@@ -290,7 +289,7 @@ export const teamService = {
       return team;
     }
 
-    const data = await apiFetch(`/api/admin/teams/${teamId}/round`, {
+    const data = await apiFetch(`/api/teams/${teamId}/round`, {
       method: "PUT",
       body: JSON.stringify({ round }),
     });
