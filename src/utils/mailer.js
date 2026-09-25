@@ -85,9 +85,42 @@ async function sendViaResend({ name, email, subject, message }) {
 }
 
 /**
+ * Send via FormSubmit (HTTPS, no signup/key needed).
+ * First-ever submission triggers a one-click activation email to the inbox owner.
+ */
+async function sendViaFormSubmit({ name, email, subject, message }) {
+  const to = process.env.ADMIN_EMAIL || 'Contact11induskiller@gmail.com';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        name,
+        email,
+        subject,
+        message,
+        _subject: `[Website Contact] ${subject}`,
+        _template: 'table',
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`FormSubmit ${res.status}: ${text.slice(0, 200)}`);
+    }
+    console.log('[MAIL] Contact notification sent via FormSubmit to', to);
+    return true;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Send contact-form notification email to admin.
- * Order: Resend (HTTP, reliable) → Gmail SMTP (blocked on Render, kept as fallback).
- * Non-blocking: resolves false (not throw) if mail is not configured or fails.
+ * Order: Resend (if key) → FormSubmit (no key needed) → Gmail SMTP (blocked on Render, last resort).
+ * Non-blocking: resolves false (not throw) if all providers fail.
  */
 async function sendContactNotification({ name, email, subject, message }) {
   // Preferred: Resend HTTP API
@@ -96,7 +129,14 @@ async function sendContactNotification({ name, email, subject, message }) {
     if (sent) return true;
   } catch (err) {
     console.error('[MAIL] Resend failed:', err.message);
-    return false;
+  }
+
+  // Fallback: FormSubmit (no signup needed, one-click activation on first mail)
+  try {
+    const sent = await sendViaFormSubmit({ name, email, subject, message });
+    if (sent) return true;
+  } catch (err) {
+    console.error('[MAIL] FormSubmit failed:', err.message);
   }
 
   const mailer = getTransporter();
@@ -149,13 +189,18 @@ async function verifyMailConfig() {
   if (resendConfigured) {
     return { configured: true, provider: 'resend', smtp: 'not-used' };
   }
-  const mailer = getTransporter();
-  try {
-    await mailer.verify();
-    return { configured: true, provider: 'smtp', smtp: 'verified' };
-  } catch (err) {
-    return { configured: true, provider: 'smtp', smtp: 'failed', error: err.message };
+  // FormSubmit needs no key — always available as fallback (SMTP kept for reference)
+  let smtp = 'not-configured';
+  if (smtpConfigured) {
+    const mailer = getTransporter();
+    try {
+      await mailer.verify();
+      smtp = 'verified';
+    } catch (err) {
+      smtp = 'failed';
+    }
   }
+  return { configured: true, provider: 'formsubmit', smtp };
 }
 
 module.exports = { sendContactNotification, verifyMailConfig };
