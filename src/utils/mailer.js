@@ -7,16 +7,33 @@ function getTransporter() {
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
     return null;
   }
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-    connectionTimeout: 10000, // fail fast instead of hanging
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-  });
+  const useTls587 = process.env.SMTP_PORT === '587';
+  transporter = nodemailer.createTransport(
+    useTls587
+      ? {
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          requireTLS: true,
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD,
+          },
+          connectionTimeout: 10000, // fail fast instead of hanging
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        }
+      : {
+          service: 'gmail',
+          auth: {
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD,
+          },
+          connectionTimeout: 10000, // fail fast instead of hanging
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        }
+  );
   return transporter;
 }
 
