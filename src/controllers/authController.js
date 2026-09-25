@@ -261,6 +261,40 @@ exports.logout = async (req, res) => {
 };
 
 /**
+ * Get all users (admin only)
+ */
+exports.getAllUsers = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.'
+      });
+    }
+
+    const snapshot = await usersRef.once('value');
+    const users = snapshot.exists() ? snapshot.val() : {};
+
+    // Convert to array, strip passwords, sort newest first
+    const usersArray = Object.keys(users).map((key) => {
+      const { password: _, ...userWithoutPassword } = users[key];
+      return { ...userWithoutPassword, id: key };
+    }).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+    res.status(200).json({
+      success: true,
+      data: usersArray
+    });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+/**
  * Update user profile
  */
 exports.updateProfile = async (req, res) => {
