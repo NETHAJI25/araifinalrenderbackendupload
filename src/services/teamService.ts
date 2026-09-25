@@ -63,12 +63,12 @@ export const teamService = {
       return newTeam;
     }
 
-    const data = await apiFetch("/api/teams/create", {
+    const data = await apiFetch("/api/teams", {
       method: "POST",
       body: JSON.stringify({ teamName, problemStatementId, problemStatementTitle }),
     });
-    authService.updateCurrentUser({ teamId: data.data.team.teamId });
-    return data.data.team;
+    authService.updateCurrentUser({ teamId: data.data.teamId });
+    return data.data;
   },
 
   async joinTeam(teamId: string): Promise<Team> {
@@ -108,8 +108,8 @@ export const teamService = {
       method: "POST",
       body: JSON.stringify({ teamId }),
     });
-    authService.updateCurrentUser({ teamId: data.data.team.teamId });
-    return data.data.team;
+    authService.updateCurrentUser({ teamId: data.data.teamId });
+    return data.data;
   },
 
   async getTeam(teamId: string): Promise<Team | null> {
@@ -123,7 +123,7 @@ export const teamService = {
 
     try {
       const data = await apiFetch(`/api/teams/${teamId}`);
-      return data.data.team;
+      return data.data;
     } catch {
       return null;
     }
@@ -141,8 +141,8 @@ export const teamService = {
     }
 
     try {
-      const data = await apiFetch("/api/teams/my-team");
-      return data.data.team;
+      const data = await apiFetch("/api/teams/my");
+      return data.data;
     } catch {
       return null;
     }
@@ -167,7 +167,7 @@ export const teamService = {
     const data = await apiFetch(`/api/teams/${teamId}/confirm`, {
       method: "POST",
     });
-    return data.data.team;
+    return data.data;
   },
 
   async updateTeamProblemStatement(teamId: string, psId: string, psTitle: string): Promise<Team> {
@@ -189,7 +189,7 @@ export const teamService = {
       method: "PUT",
       body: JSON.stringify({ problemStatementId: psId, problemStatementTitle: psTitle }),
     });
-    return data.data.team;
+    return data.data;
   },
 
   async leaveTeam(teamId: string): Promise<void> {
@@ -236,7 +236,7 @@ export const teamService = {
     const data = await apiFetch(`/api/teams/${teamId}/complete`, {
       method: "POST",
     });
-    return data.data.team;
+    return data.data;
   },
 
   // ─── ADMIN ACTIONS ────────────────────────────────────────────────────────────
@@ -249,7 +249,7 @@ export const teamService = {
     }
 
     const data = await apiFetch("/api/admin/teams");
-    return data.data.teams;
+    return data.data;
   },
 
   async rejectTeam(teamId: string, reason: string): Promise<Team> {
@@ -272,7 +272,7 @@ export const teamService = {
       method: "POST",
       body: JSON.stringify({ reason }),
     });
-    return data.data.team;
+    return data.data;
   },
 
   async updateTeamRound(teamId: string, round: 1 | 2): Promise<Team> {
@@ -294,6 +294,6 @@ export const teamService = {
       method: "PUT",
       body: JSON.stringify({ round }),
     });
-    return data.data.team;
+    return data.data;
   },
 };

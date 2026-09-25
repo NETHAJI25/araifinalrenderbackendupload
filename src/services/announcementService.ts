@@ -57,7 +57,8 @@ export const announcementService = {
 
     try {
       const data = await apiFetch("/api/announcements");
-      return data.data.announcements;
+      // Backend returns { success: true, data: announcementsArray }
+      return data.data || [];
     } catch {
       // Fallback to localStorage if API fails
       try {
@@ -88,11 +89,11 @@ export const announcementService = {
       return newAnnouncement;
     }
 
-    const data = await apiFetch("/api/admin/announcements", {
+    const data = await apiFetch("/api/announcements", {
       method: "POST",
       body: JSON.stringify(announcement),
     });
-    return data.data.announcement;
+    return data.data;
   },
 
   update: async (id: string, updates: Partial<Announcement>): Promise<Announcement> => {
@@ -106,11 +107,11 @@ export const announcementService = {
       return updated;
     }
 
-    const data = await apiFetch(`/api/admin/announcements/${id}`, {
+    const data = await apiFetch(`/api/announcements/${id}`, {
       method: "PUT",
       body: JSON.stringify(updates),
     });
-    return data.data.announcement;
+    return data.data;
   },
 
   delete: async (id: string): Promise<void> => {
@@ -121,7 +122,7 @@ export const announcementService = {
       return;
     }
 
-    await apiFetch(`/api/admin/announcements/${id}`, {
+    await apiFetch(`/api/announcements/${id}`, {
       method: "DELETE",
     });
   },
