@@ -24,12 +24,16 @@ app.use(cors({
       'http://localhost:5173',
       'http://localhost:3000',
       'https://innovators-arena-tau.vercel.app',
-      process.env.FRONTEND_URL
+      'https://innovators-arena-tau.site',
+      'https://www.innovators-arena-tau.site',
+      process.env.FRONTEND_URL,
+      // Comma-separated extra origins via env, e.g. ADDITIONAL_ORIGINS=https://a.com,https://b.com
+      ...(process.env.ADDITIONAL_ORIGINS ? process.env.ADDITIONAL_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean) : []),
     ].filter(Boolean);
-    
+
     // Allow any Vercel preview deployment for this project
     const vercelPreviewRegex = /^https:\/\/innovators-arena-[a-z0-9-]+\.vercel\.app$/;
-    
+
     if (!origin || allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin)) {
       callback(null, true);
     } else {
