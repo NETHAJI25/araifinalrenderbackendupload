@@ -43,14 +43,66 @@ function getTransporter() {
 }
 
 /**
+ * Send via Resend HTTP API (works over port 443 — never blocked).
+ * Returns true on success, throws on failure.
+ */
+async function sendViaResend({ name, email, subject, message }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null; // not configured
+  const from = process.env.MAIL_FROM || 'Innovators Arena <onboarding@resend.dev>';
+  const to = process.env.ADMIN_EMAIL || 'Contact11induskiller@gmail.com';
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to,
+      reply_to: email,
+      subject: `[Website Contact] ${subject}`,
+      html: `
+        <h2>New Website Contact Message</h2>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
+        <p><strong>Message:</strong></p>
+        <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
+        <hr>
+        <p>Reply directly to ${escapeHtml(email)}</p>
+      `,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Resend ${res.status}: ${text.slice(0, 200)}`);
+  }
+  console.log('[MAIL] Contact notification sent via Resend to', to);
+  return true;
+}
+
+/**
  * Send contact-form notification email to admin.
+ * Order: Resend (HTTP, reliable) → Gmail SMTP (blocked on Render, kept as fallback).
  * Non-blocking: resolves false (not throw) if mail is not configured or fails.
  */
 async function sendContactNotification({ name, email, subject, message }) {
+  // Preferred: Resend HTTP API
+  try {
+    const sent = await sendViaResend({ name, email, subject, message });
+    if (sent) return true;
+  } catch (err) {
+    console.error('[MAIL] Resend failed:', err.message);
+    return false;
+  }
+
   const mailer = getTransporter();
   const adminEmail = process.env.ADMIN_EMAIL || 'Contact11induskiller@gmail.com';
   if (!mailer) {
-    console.warn('[MAIL] Gmail not configured (GMAIL_USER/GMAIL_APP_PASSWORD missing). Skipping email.');
+    console.warn('[MAIL] No mail provider configured. Skipping email.');
     return false;
   }
 
@@ -89,16 +141,20 @@ function escapeHtml(str) {
  * Verify SMTP connectivity without exposing secrets.
  */
 async function verifyMailConfig() {
-  const configured = Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
-  if (!configured) {
-    return { configured: false, reason: 'GMAIL_USER or GMAIL_APP_PASSWORD missing' };
+  const resendConfigured = Boolean(process.env.RESEND_API_KEY);
+  const smtpConfigured = Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+  if (!resendConfigured && !smtpConfigured) {
+    return { configured: false, reason: 'No mail provider configured (RESEND_API_KEY or GMAIL_* missing)' };
+  }
+  if (resendConfigured) {
+    return { configured: true, provider: 'resend', smtp: 'not-used' };
   }
   const mailer = getTransporter();
   try {
     await mailer.verify();
-    return { configured: true, smtp: 'verified', userSet: true };
+    return { configured: true, provider: 'smtp', smtp: 'verified' };
   } catch (err) {
-    return { configured: true, smtp: 'failed', error: err.message };
+    return { configured: true, provider: 'smtp', smtp: 'failed', error: err.message };
   }
 }
 
