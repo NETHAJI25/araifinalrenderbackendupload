@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../config/db');
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 const { generateSubmissionId } = require('../utils/idGenerator');
 
 function formatSubmission(row) {
@@ -34,9 +35,10 @@ exports.submitProject = async (req, res) => {
       });
     }
 
-    // Get current user (fixed: proper SQL lookup instead of undefined usersRef)
-    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (userResult.rows.length === 0) {
+    // Get current user
+    const { data: user, error: userError } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+    if (userError) throw new Error(userError.message);
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -44,15 +46,14 @@ exports.submitProject = async (req, res) => {
     }
 
     // Get team by CODE
-    const teamResult = await query('SELECT * FROM teams WHERE team_id = $1', [teamId]);
-    if (teamResult.rows.length === 0) {
+    const { data: team, error: teamError } = await supabase.from('teams').select('*').eq('team_id', teamId).maybeSingle();
+    if (teamError) throw new Error(teamError.message);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
-
-    const team = teamResult.rows[0];
 
     // Check if user is team leader
     if (team.leader_id !== userId) {
@@ -71,8 +72,9 @@ exports.submitProject = async (req, res) => {
     }
 
     // Check if all team members have paid
-    const membersResult = await query('SELECT payment_status FROM team_members WHERE team_id = $1', [team.team_id]);
-    const allPaid = membersResult.rows.every(member => member.payment_status === 'paid');
+    const { data: members, error: membersError } = await supabase.from('team_members').select('payment_status').eq('team_id', team.team_id);
+    if (membersError) throw new Error(membersError.message);
+    const allPaid = (members || []).every(member => member.payment_status === 'paid');
     if (!allPaid) {
       return res.status(400).json({
         success: false,
@@ -81,8 +83,9 @@ exports.submitProject = async (req, res) => {
     }
 
     // Check if team already has a submission
-    const existingResult = await query('SELECT id FROM submissions WHERE team_id = $1 LIMIT 1', [team.team_id]);
-    if (existingResult.rows.length > 0) {
+    const { data: existing, error: existingError } = await supabase.from('submissions').select('id').eq('team_id', team.team_id).limit(1).maybeSingle();
+    if (existingError) throw new Error(existingError.message);
+    if (existing) {
       return res.status(400).json({
         success: false,
         message: 'This team has already submitted a project.'
@@ -93,23 +96,20 @@ exports.submitProject = async (req, res) => {
     const id = uuidv4();
     const generatedSubmissionId = generateSubmissionId();
 
-    const insertResult = await query(
-      `INSERT INTO submissions (id, submission_id, team_id, project_name, description, presentation_url, code_url, demo_video_url, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'submitted')
-       RETURNING *`,
-      [
-        id,
-        generatedSubmissionId,
-        team.team_id,
-        projectName,
-        description || '',
-        presentationUrl || null,
-        codeUrl || null,
-        demoVideoUrl || null
-      ]
-    );
+    const { data: inserted, error: insertError } = await supabase.from('submissions').insert({
+      id,
+      submission_id: generatedSubmissionId,
+      team_id: team.team_id,
+      project_name: projectName,
+      description: description || '',
+      presentation_url: presentationUrl || null,
+      code_url: codeUrl || null,
+      demo_video_url: demoVideoUrl || null,
+      status: 'submitted'
+    }).select().maybeSingle();
+    if (insertError) throw new Error(insertError.message);
 
-    const newSubmission = formatSubmission(insertResult.rows[0]);
+    const newSubmission = formatSubmission(inserted);
 
     res.status(201).json({
       success: true,
@@ -139,9 +139,10 @@ exports.getMySubmission = async (req, res) => {
       });
     }
 
-    const result = await query('SELECT * FROM submissions WHERE team_id = $1 LIMIT 1', [teamId]);
+    const { data: row, error } = await supabase.from('submissions').select('*').eq('team_id', teamId).limit(1).maybeSingle();
+    if (error) throw new Error(error.message);
 
-    const submission = result.rows.length > 0 ? formatSubmission(result.rows[0]) : null;
+    const submission = row ? formatSubmission(row) : null;
 
     res.status(200).json({
       success: true,
@@ -173,26 +174,24 @@ exports.updateSubmission = async (req, res) => {
     }
 
     // Get submission
-    const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
-    if (submissionResult.rows.length === 0) {
+    const { data: submission, error: submissionError } = await supabase.from('submissions').select('*').eq('id', submissionId).maybeSingle();
+    if (submissionError) throw new Error(submissionError.message);
+    if (!submission) {
       return res.status(404).json({
         success: false,
         message: 'Submission not found'
       });
     }
 
-    const submission = submissionResult.rows[0];
-
     // Get team (by row's team_id code) to verify user is team leader
-    const teamResult = await query('SELECT * FROM teams WHERE team_id = $1', [submission.team_id]);
-    if (teamResult.rows.length === 0) {
+    const { data: team, error: teamError } = await supabase.from('teams').select('*').eq('team_id', submission.team_id).maybeSingle();
+    if (teamError) throw new Error(teamError.message);
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
-
-    const team = teamResult.rows[0];
 
     // Check if user is team leader
     if (team.leader_id !== userId) {
@@ -212,18 +211,14 @@ exports.updateSubmission = async (req, res) => {
       status: 'status'
     };
 
-    const fields = [];
-    const values = [];
-    let idx = 1;
-
+    const patch = {};
     for (const [camelKey, column] of Object.entries(columnMap)) {
       if (updates[camelKey] !== undefined) {
-        fields.push(`${column} = $${idx++}`);
-        values.push(updates[camelKey]);
+        patch[column] = updates[camelKey];
       }
     }
 
-    if (fields.length === 0) {
+    if (Object.keys(patch).length === 0) {
       // Nothing to update — return current row as-is
       return res.status(200).json({
         success: true,
@@ -232,14 +227,10 @@ exports.updateSubmission = async (req, res) => {
       });
     }
 
-    values.push(submissionId);
+    const { data: updated, error: updateError } = await supabase.from('submissions').update(patch).eq('id', submissionId).select().maybeSingle();
+    if (updateError) throw new Error(updateError.message);
 
-    const updateResult = await query(
-      `UPDATE submissions SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
-      values
-    );
-
-    const updatedSubmission = formatSubmission(updateResult.rows[0]);
+    const updatedSubmission = formatSubmission(updated);
 
     res.status(200).json({
       success: true,
@@ -268,8 +259,9 @@ exports.getAll = async (req, res) => {
       });
     }
 
-    const result = await query('SELECT * FROM submissions ORDER BY submitted_at DESC');
-    const submissionsArray = result.rows.map(formatSubmission);
+    const { data: rows, error } = await supabase.from('submissions').select('*').order('submitted_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    const submissionsArray = (rows || []).map(formatSubmission);
 
     res.status(200).json({
       success: true,

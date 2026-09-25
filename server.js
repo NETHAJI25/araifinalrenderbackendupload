@@ -8,8 +8,9 @@ const path = require('path');
 // Load environment variables
 dotenv.config();
 
-// Supabase Postgres pool (lazy — connects on first query)
-const { getPool } = require('./src/config/db');
+// Supabase JS client over HTTPS (no pg)
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 
 // Initialize Express app
 const app = express();
@@ -41,17 +42,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Verify Supabase Postgres connectivity (non-fatal — pool connects lazily per query)
+// Verify Supabase connectivity (non-fatal)
 (async () => {
-  if (!process.env.DATABASE_URL) {
-    console.warn('DATABASE_URL not set — database queries will fail until configured');
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    console.warn('SUPABASE_URL or SUPABASE_SERVICE_KEY not set — database queries will fail until configured');
     return;
   }
   try {
-    await (await getPool()).query('SELECT 1');
-    console.log('Supabase Postgres connected successfully');
+    const { error } = await supabase.from('announcements').select('id', { count: 'exact', head: true });
+    if (error) throw new Error(error.message);
+    console.log('Supabase connected successfully');
   } catch (error) {
-    console.error('Postgres connection check failed (will retry per query):', error.message);
+    console.error('Supabase connection check failed (will retry per query):', error.message);
   }
 })();
 
@@ -67,10 +69,11 @@ app.get('/health', (req, res) => {
 // Temporary DB connectivity diagnostic (no secrets exposed)
 app.get('/api/debug/db', async (req, res) => {
   try {
-    const r = await (await getPool()).query('SELECT version()');
-    res.json({ success: true, db: r.rows[0].version.slice(0, 80) });
+    const { error } = await supabase.from('announcements').select('id', { count: 'exact', head: true });
+    if (error) throw new Error(error.message);
+    res.json({ success: true, db: 'supabase-rest-ok' });
   } catch (e) {
-    res.json({ success: false, error: e.message, code: e.code });
+    res.json({ success: false, error: e.message });
   }
 });
 

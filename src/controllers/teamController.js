@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../config/db');
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 const { generateTeamId } = require('../utils/idGenerator');
 const eventConfig = require('../config/eventConfig');
 
@@ -38,11 +39,20 @@ function formatTeam(teamRow, memberRows) {
 }
 
 async function fetchTeamByCode(code) {
-  const teamRes = await query('SELECT * FROM teams WHERE team_id = $1', [code]);
-  if (teamRes.rows.length === 0) return null;
-  const teamRow = teamRes.rows[0];
-  const membersRes = await query('SELECT * FROM team_members WHERE team_id = $1 ORDER BY joined_at', [code]);
-  return formatTeam(teamRow, membersRes.rows);
+  const { data: teamRow, error: teamError } = await supabase
+    .from('teams')
+    .select('*')
+    .eq('team_id', code)
+    .maybeSingle();
+  if (teamError) throw new Error(teamError.message);
+  if (!teamRow) return null;
+  const { data: memberRows, error: membersError } = await supabase
+    .from('team_members')
+    .select('*')
+    .eq('team_id', code)
+    .order('joined_at');
+  if (membersError) throw new Error(membersError.message);
+  return formatTeam(teamRow, memberRows || []);
 }
 
 /**
@@ -62,15 +72,18 @@ exports.createTeam = async (req, res) => {
     }
 
     // Get current user
-    const userRes = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (userRes.rows.length === 0) {
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (userError) throw new Error(userError.message);
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-
-    const user = userRes.rows[0];
 
     // Check if user is already in a team
     if (user.team_id) {
@@ -79,8 +92,13 @@ exports.createTeam = async (req, res) => {
         message: 'You are already in a team'
       });
     }
-    const memberRes = await query('SELECT 1 FROM team_members WHERE user_id = $1 LIMIT 1', [userId]);
-    if (memberRes.rows.length > 0) {
+    const { data: existingMember, error: memberCheckError } = await supabase
+      .from('team_members')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (memberCheckError) throw new Error(memberCheckError.message);
+    if (existingMember) {
       return res.status(400).json({
         success: false,
         message: 'You are already in a team'
@@ -90,21 +108,45 @@ exports.createTeam = async (req, res) => {
     // Create new team
     const id = uuidv4();
     const generatedTeamId = generateTeamId();
+    const now = new Date().toISOString();
 
-    await query(
-      `INSERT INTO teams (id, team_id, team_name, leader_id, problem_statement_id, problem_statement_title, status, confirmation_status, round, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'active', 'pending', 1, NOW(), NOW())`,
-      [id, generatedTeamId, teamName, userId, problemStatementId || null, problemStatementTitle || null]
-    );
+    const { error: insertTeamError } = await supabase
+      .from('teams')
+      .insert({
+        id,
+        team_id: generatedTeamId,
+        team_name: teamName,
+        leader_id: userId,
+        problem_statement_id: problemStatementId || null,
+        problem_statement_title: problemStatementTitle || null,
+        status: 'active',
+        confirmation_status: 'pending',
+        round: 1,
+        created_at: now,
+        updated_at: now
+      });
+    if (insertTeamError) throw new Error(insertTeamError.message);
 
-    await query(
-      `INSERT INTO team_members (team_id, user_id, name, college, role, payment_status, profile_completed, joined_at)
-       VALUES ($1, $2, $3, $4, 'Team Leader', $5, $6, NOW())`,
-      [generatedTeamId, user.id, user.name, user.college, user.payment_status, user.profile_completed]
-    );
+    const { error: insertMemberError } = await supabase
+      .from('team_members')
+      .insert({
+        team_id: generatedTeamId,
+        user_id: user.id,
+        name: user.name,
+        college: user.college,
+        role: 'Team Leader',
+        payment_status: user.payment_status,
+        profile_completed: user.profile_completed,
+        joined_at: new Date().toISOString()
+      });
+    if (insertMemberError) throw new Error(insertMemberError.message);
 
     // Update user's team_id
-    await query('UPDATE users SET team_id = $1 WHERE id = $2', [generatedTeamId, userId]);
+    const { error: updateUserError } = await supabase
+      .from('users')
+      .update({ team_id: generatedTeamId })
+      .eq('id', userId);
+    if (updateUserError) throw new Error(updateUserError.message);
 
     const newTeam = await fetchTeamByCode(generatedTeamId);
 
@@ -139,15 +181,18 @@ exports.joinTeam = async (req, res) => {
     }
 
     // Get current user
-    const userRes = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (userRes.rows.length === 0) {
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (userError) throw new Error(userError.message);
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-
-    const user = userRes.rows[0];
 
     // Get team by CODE (team_id column)
     const team = await fetchTeamByCode(teamId);
@@ -184,17 +229,33 @@ exports.joinTeam = async (req, res) => {
     }
 
     // Add user to team
-    await query(
-      `INSERT INTO team_members (team_id, user_id, name, college, role, payment_status, profile_completed, joined_at)
-       VALUES ($1, $2, $3, $4, 'Member', $5, $6, NOW())`,
-      [team.teamId, user.id, user.name, user.college, user.payment_status, user.profile_completed]
-    );
+    const { error: insertError } = await supabase
+      .from('team_members')
+      .insert({
+        team_id: team.teamId,
+        user_id: user.id,
+        name: user.name,
+        college: user.college,
+        role: 'Member',
+        payment_status: user.payment_status,
+        profile_completed: user.profile_completed,
+        joined_at: new Date().toISOString()
+      });
+    if (insertError) throw new Error(insertError.message);
 
     // Update user's team_id
-    await query('UPDATE users SET team_id = $1 WHERE id = $2', [team.teamId, userId]);
+    const { error: updateUserError } = await supabase
+      .from('users')
+      .update({ team_id: team.teamId })
+      .eq('id', userId);
+    if (updateUserError) throw new Error(updateUserError.message);
 
     // Update teams.updated_at
-    await query('UPDATE teams SET updated_at = NOW() WHERE team_id = $1', [team.teamId]);
+    const { error: touchError } = await supabase
+      .from('teams')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('team_id', team.teamId);
+    if (touchError) throw new Error(touchError.message);
 
     const updatedTeam = await fetchTeamByCode(teamId);
 
@@ -256,15 +317,18 @@ exports.getMyTeam = async (req, res) => {
     const userId = req.user.userId;
 
     // Get current user
-    const userRes = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (userRes.rows.length === 0) {
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (userError) throw new Error(userError.message);
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-
-    const user = userRes.rows[0];
 
     if (!user.team_id) {
       return res.status(200).json({
@@ -329,7 +393,11 @@ exports.confirmTeam = async (req, res) => {
     }
 
     // Update team confirmation status
-    await query("UPDATE teams SET confirmation_status = 'confirmed', updated_at = NOW() WHERE team_id = $1", [teamId]);
+    const { error: updateError } = await supabase
+      .from('teams')
+      .update({ confirmation_status: 'confirmed', updated_at: new Date().toISOString() })
+      .eq('team_id', teamId);
+    if (updateError) throw new Error(updateError.message);
 
     const updatedTeam = await fetchTeamByCode(teamId);
 
@@ -374,10 +442,15 @@ exports.updateTeamProblemStatement = async (req, res) => {
     }
 
     // Update team
-    await query(
-      'UPDATE teams SET problem_statement_id = $1, problem_statement_title = $2, updated_at = NOW() WHERE team_id = $3',
-      [psId !== undefined ? psId : null, psTitle !== undefined ? psTitle : null, teamId]
-    );
+    const { error: updateError } = await supabase
+      .from('teams')
+      .update({
+        problem_statement_id: psId !== undefined ? psId : null,
+        problem_statement_title: psTitle !== undefined ? psTitle : null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('team_id', teamId);
+    if (updateError) throw new Error(updateError.message);
 
     const updatedTeam = await fetchTeamByCode(teamId);
 
@@ -421,13 +494,26 @@ exports.leaveTeam = async (req, res) => {
     }
 
     // Remove user from team
-    await query('DELETE FROM team_members WHERE team_id = $1 AND user_id = $2', [teamId, userId]);
+    const { error: deleteError } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('team_id', teamId)
+      .eq('user_id', userId);
+    if (deleteError) throw new Error(deleteError.message);
 
     // Update user's team_id
-    await query('UPDATE users SET team_id = NULL WHERE id = $1', [userId]);
+    const { error: updateUserError } = await supabase
+      .from('users')
+      .update({ team_id: null })
+      .eq('id', userId);
+    if (updateUserError) throw new Error(updateUserError.message);
 
     // Update teams.updated_at
-    await query('UPDATE teams SET updated_at = NOW() WHERE team_id = $1', [teamId]);
+    const { error: touchError } = await supabase
+      .from('teams')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('team_id', teamId);
+    if (touchError) throw new Error(touchError.message);
 
     const updatedTeam = await fetchTeamByCode(teamId);
 
@@ -479,7 +565,11 @@ exports.markTeamComplete = async (req, res) => {
     }
 
     // Update team status
-    await query("UPDATE teams SET status = 'complete', updated_at = NOW() WHERE team_id = $1", [teamId]);
+    const { error: updateError } = await supabase
+      .from('teams')
+      .update({ status: 'complete', updated_at: new Date().toISOString() })
+      .eq('team_id', teamId);
+    if (updateError) throw new Error(updateError.message);
 
     const updatedTeam = await fetchTeamByCode(teamId);
 
@@ -510,16 +600,25 @@ exports.getAllTeams = async (req, res) => {
       });
     }
 
-    const teamsRes = await query('SELECT * FROM teams ORDER BY created_at DESC');
-    const membersRes = await query('SELECT * FROM team_members ORDER BY joined_at');
+    const { data: teamRows, error: teamsError } = await supabase
+      .from('teams')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (teamsError) throw new Error(teamsError.message);
+
+    const { data: memberRows, error: membersError } = await supabase
+      .from('team_members')
+      .select('*')
+      .order('joined_at');
+    if (membersError) throw new Error(membersError.message);
 
     const membersByTeam = {};
-    for (const m of membersRes.rows) {
+    for (const m of (memberRows || [])) {
       if (!membersByTeam[m.team_id]) membersByTeam[m.team_id] = [];
       membersByTeam[m.team_id].push(m);
     }
 
-    const teamsArray = teamsRes.rows.map((teamRow) =>
+    const teamsArray = (teamRows || []).map((teamRow) =>
       formatTeam(teamRow, membersByTeam[teamRow.team_id] || [])
     );
 
@@ -562,11 +661,15 @@ exports.rejectTeam = async (req, res) => {
     }
 
     // Update team status
-    await query('UPDATE teams SET status = $1, rejection_reason = $2, updated_at = NOW() WHERE team_id = $3', [
-      'rejected',
-      reason !== undefined ? reason : null,
-      teamId
-    ]);
+    const { error: updateError } = await supabase
+      .from('teams')
+      .update({
+        status: 'rejected',
+        rejection_reason: reason !== undefined ? reason : null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('team_id', teamId);
+    if (updateError) throw new Error(updateError.message);
 
     const updatedTeam = await fetchTeamByCode(teamId);
 
@@ -618,7 +721,11 @@ exports.updateTeamRound = async (req, res) => {
     }
 
     // Update team round
-    await query('UPDATE teams SET round = $1, updated_at = NOW() WHERE team_id = $2', [round, teamId]);
+    const { error: updateError } = await supabase
+      .from('teams')
+      .update({ round, updated_at: new Date().toISOString() })
+      .eq('team_id', teamId);
+    if (updateError) throw new Error(updateError.message);
 
     const updatedTeam = await fetchTeamByCode(teamId);
 

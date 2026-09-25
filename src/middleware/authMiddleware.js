@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
-const { query } = require('../config/db');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 
 /**
  * Authentication middleware
@@ -26,8 +28,15 @@ exports.authenticate = async (req, res, next) => {
     };
 
     // Verify user still exists in database
-    const result = await query('SELECT id FROM users WHERE id = $1', [decoded.userId]);
-    if (result.rows.length === 0) {
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', decoded.userId)
+      .maybeSingle();
+    if (findError) {
+      throw new Error(findError.message);
+    }
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: 'User not found'
@@ -85,16 +94,21 @@ exports.authorizeTeamLeader = async (req, res, next) => {
     }
 
     // Get team by CODE (team_id column, not Firebase key)
-    const result = await query('SELECT * FROM teams WHERE team_id = $1', [teamId]);
+    const { data: team, error: findError } = await supabase
+      .from('teams')
+      .select('*')
+      .eq('team_id', teamId)
+      .maybeSingle();
+    if (findError) {
+      throw new Error(findError.message);
+    }
 
-    if (result.rows.length === 0) {
+    if (!team) {
       return res.status(404).json({
         success: false,
         message: 'Team not found'
       });
     }
-
-    const team = result.rows[0];
 
     // Check if user is team leader
     if (team.leader_id !== userId) {

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../config/db');
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 const { sendContactNotification } = require('../utils/mailer');
 const { verifyMailConfig } = require('../utils/mailer');
 
@@ -36,12 +37,17 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Store in Postgres contacts table
+    // Store in contacts table
     const contactId = uuidv4();
-    await query(
-      `INSERT INTO contacts (id, name, email, subject, message, status) VALUES ($1, $2, $3, $4, $5, 'new')`,
-      [contactId, name, email, subject, message]
-    );
+    const { error } = await supabase.from('contacts').insert({
+      id: contactId,
+      name,
+      email,
+      subject,
+      message,
+      status: 'new'
+    });
+    if (error) throw new Error(error.message);
 
     // Send email notification to admin (non-blocking — form succeeds even if mail fails)
     let emailSent = false;

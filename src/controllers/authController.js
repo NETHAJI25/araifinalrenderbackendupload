@@ -2,8 +2,10 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const validator = require('validator');
-const { query } = require('../config/db');
+const { createClient } = require('@supabase/supabase-js');
 const eventConfig = require('../config/eventConfig');
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 
 /**
  * Generate JWT token
@@ -41,7 +43,7 @@ const validatePassword = (password) => {
 
 /**
  * Map a DB row (snake_case) to a camelCase API object (never includes password)
- * @param {Object} row - pg row from users table
+ * @param {Object} row - Supabase row from users table
  * @returns {Object} API user object
  */
 const mapUserRow = (row) => {
@@ -97,8 +99,15 @@ exports.register = async (req, res) => {
     }
 
     // Check if user already exists
-    const existing = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
-    if (existing.rows.length > 0) {
+    const { data: existing, error: existingError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .maybeSingle();
+    if (existingError) {
+      throw new Error(existingError.message);
+    }
+    if (existing) {
       return res.status(400).json({
         success: false,
         message: 'User with this email already exists'
@@ -120,32 +129,34 @@ exports.register = async (req, res) => {
 
     // Create new user
     const userId = uuidv4();
-    const result = await query(
-      `INSERT INTO users (id, name, email, password, phone, college, course, year, city, state, country, linkedin, github, profile_completed, payment_status, team_id, role)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-       RETURNING *`,
-      [
-        userId,
+    const { data: inserted, error: insertError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
         name,
-        email.toLowerCase(),
-        hashedPassword,
+        email: email.toLowerCase(),
+        password: hashedPassword,
         phone,
         college,
         course,
         year,
         city,
         state,
-        country || 'India',
-        linkedin || null,
-        github || null,
-        false,
-        'pending',
-        null,
+        country: country || 'India',
+        linkedin: linkedin || null,
+        github: github || null,
+        profile_completed: false,
+        payment_status: 'pending',
+        team_id: null,
         role
-      ]
-    );
+      })
+      .select()
+      .single();
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
 
-    const userWithoutPassword = mapUserRow(result.rows[0]);
+    const userWithoutPassword = mapUserRow(inserted);
 
     // Generate token
     const token = generateToken({ id: userId, email: email.toLowerCase(), role });
@@ -189,15 +200,20 @@ exports.login = async (req, res) => {
     }
 
     // Find user by email
-    const result = await query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
-    if (result.rows.length === 0) {
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .maybeSingle();
+    if (findError) {
+      throw new Error(findError.message);
+    }
+    if (!user) {
       return res.status(400).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
-
-    const user = result.rows[0];
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
@@ -238,15 +254,22 @@ exports.getCurrentUser = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const result = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (result.rows.length === 0) {
+    const { data: user, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (findError) {
+      throw new Error(findError.message);
+    }
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const userWithoutPassword = mapUserRow(result.rows[0]);
+    const userWithoutPassword = mapUserRow(user);
 
     res.status(200).json({
       success: true,
@@ -283,10 +306,16 @@ exports.getAllUsers = async (req, res) => {
       });
     }
 
-    const result = await query('SELECT * FROM users ORDER BY created_at DESC');
+    const { data: rows, error: listError } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (listError) {
+      throw new Error(listError.message);
+    }
 
     // Strip passwords (mapUserRow never includes password)
-    const usersArray = result.rows.map((row) => mapUserRow(row));
+    const usersArray = rows.map((row) => mapUserRow(row));
 
     res.status(200).json({
       success: true,
@@ -334,43 +363,49 @@ exports.updateProfile = async (req, res) => {
       team_id: 'team_id'
     };
 
-    const setClauses = [];
-    const values = [];
-    let paramIndex = 1;
-
+    const updatePayload = {};
     for (const [key, value] of Object.entries(updates)) {
       const column = fieldMap[key];
       if (column) {
-        setClauses.push(`${column} = $${paramIndex}`);
-        values.push(value);
-        paramIndex += 1;
+        updatePayload[column] = value;
       }
     }
 
     let updatedRow;
-    if (setClauses.length > 0) {
-      values.push(userId);
-      const result = await query(
-        `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
-        values
-      );
-      if (result.rows.length === 0) {
+    if (Object.keys(updatePayload).length > 0) {
+      const { data, error: updateError } = await supabase
+        .from('users')
+        .update(updatePayload)
+        .eq('id', userId)
+        .select()
+        .maybeSingle();
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+      if (!data) {
         return res.status(404).json({
           success: false,
           message: 'User not found'
         });
       }
-      updatedRow = result.rows[0];
+      updatedRow = data;
     } else {
       // No updatable fields provided — just fetch current user
-      const result = await query('SELECT * FROM users WHERE id = $1', [userId]);
-      if (result.rows.length === 0) {
+      const { data, error: findError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      if (findError) {
+        throw new Error(findError.message);
+      }
+      if (!data) {
         return res.status(404).json({
           success: false,
           message: 'User not found'
         });
       }
-      updatedRow = result.rows[0];
+      updatedRow = data;
     }
 
     const userWithoutPassword = mapUserRow(updatedRow);

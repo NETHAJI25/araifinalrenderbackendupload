@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../config/db');
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 
 /**
  * Map a Postgres payments row (snake_case) to the API shape (camelCase).
@@ -29,7 +30,11 @@ function formatPayment(row) {
  */
 async function syncTeamMemberPayment(userId) {
   try {
-    await query(`UPDATE team_members SET payment_status='paid' WHERE user_id=$1`, [userId]);
+    const { error } = await supabase
+      .from('team_members')
+      .update({ payment_status: 'paid' })
+      .eq('user_id', userId);
+    if (error) throw new Error(error.message);
   } catch (err) {
     console.error('syncTeamMemberPayment error:', err);
   }
@@ -43,23 +48,29 @@ exports.createPayment = async (req, res) => {
     const userId = req.user.userId;
 
     // Get current user
-    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (userResult.rows.length === 0) {
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (userError) throw new Error(userError.message);
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = userResult.rows[0];
-
     // Check if user already has a completed payment
-    const paidResult = await query(
-      "SELECT id FROM payments WHERE user_id = $1 AND status = 'paid' LIMIT 1",
-      [userId]
-    );
+    const { data: paidRows, error: paidError } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'paid')
+      .limit(1);
+    if (paidError) throw new Error(paidError.message);
 
-    if (paidResult.rows.length > 0) {
+    if (paidRows && paidRows.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'Payment already completed'
@@ -81,24 +92,39 @@ exports.createPayment = async (req, res) => {
     };
 
     // Save payment to database
-    await query(
-      `INSERT INTO payments (id, user_id, amount, currency, status, reference) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [paymentId, user.id, 200, 'INR', 'processing', null]
-    );
+    const { error: insertError } = await supabase.from('payments').insert({
+      id: paymentId,
+      user_id: user.id,
+      amount: 200,
+      currency: 'INR',
+      status: 'processing',
+      reference: null
+    });
+    if (insertError) throw new Error(insertError.message);
 
     // Simulate async payment verification (in real implementation, this would be webhook from Razorpay)
     setTimeout(async () => {
       try {
-        const paymentResult = await query('SELECT * FROM payments WHERE id = $1', [paymentId]);
-        if (paymentResult.rows.length > 0) {
+        const { data: existingPayment, error: fetchError } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('id', paymentId)
+          .maybeSingle();
+        if (fetchError) throw new Error(fetchError.message);
+        if (existingPayment) {
           const reference = `REF${Date.now()}`;
-          await query(
-            `UPDATE payments SET status = 'paid', reference = $1, updated_at = NOW() WHERE id = $2`,
-            [reference, paymentId]
-          );
+          const { error: updateError } = await supabase
+            .from('payments')
+            .update({ status: 'paid', reference, updated_at: new Date().toISOString() })
+            .eq('id', paymentId);
+          if (updateError) throw new Error(updateError.message);
 
           // Update user's payment status
-          await query(`UPDATE users SET payment_status = 'paid' WHERE id = $1`, [userId]);
+          const { error: userUpdateError } = await supabase
+            .from('users')
+            .update({ payment_status: 'paid' })
+            .eq('id', userId);
+          if (userUpdateError) throw new Error(userUpdateError.message);
 
           // Sync team member entry
           await syncTeamMemberPayment(userId);
@@ -136,15 +162,20 @@ exports.getPaymentById = async (req, res) => {
       });
     }
 
-    const paymentResult = await query('SELECT * FROM payments WHERE id = $1', [paymentId]);
-    if (paymentResult.rows.length === 0) {
+    const { data: row, error: fetchError } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('id', paymentId)
+      .maybeSingle();
+    if (fetchError) throw new Error(fetchError.message);
+    if (!row) {
       return res.status(404).json({
         success: false,
         message: 'Payment not found'
       });
     }
 
-    const payment = formatPayment(paymentResult.rows[0]);
+    const payment = formatPayment(row);
 
     res.status(200).json({
       success: true,
@@ -167,8 +198,13 @@ exports.getMyPayment = async (req, res) => {
     const userId = req.user.userId;
 
     // Get current user
-    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (userResult.rows.length === 0) {
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (userError) throw new Error(userError.message);
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -176,13 +212,16 @@ exports.getMyPayment = async (req, res) => {
     }
 
     // Get the most recent payment
-    const paymentsResult = await query(
-      'SELECT * FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
-      [userId]
-    );
+    const { data: paymentRows, error: paymentsError } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (paymentsError) throw new Error(paymentsError.message);
 
     const latestPayment =
-      paymentsResult.rows.length > 0 ? formatPayment(paymentsResult.rows[0]) : null;
+      paymentRows && paymentRows.length > 0 ? formatPayment(paymentRows[0]) : null;
 
     res.status(200).json({
       success: true,
@@ -205,55 +244,90 @@ exports.mockCompletePay = async (req, res) => {
     const userId = req.user.userId;
 
     // Get current user
-    const userResult = await query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (userResult.rows.length === 0) {
+    const { data: userRow, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (userError) throw new Error(userError.message);
+    if (!userRow) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const userRow = userResult.rows[0];
     const user = userRow;
 
     // Get user's most recent payment
-    const paymentsResult = await query(
-      'SELECT * FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
-      [userId]
-    );
+    const { data: paymentRows, error: paymentsError } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (paymentsError) throw new Error(paymentsError.message);
 
     let payment = null;
 
-    if (paymentsResult.rows.length > 0) {
+    if (paymentRows && paymentRows.length > 0) {
       // Update existing payment
-      const existing = paymentsResult.rows[0];
+      const existing = paymentRows[0];
       const reference = `REF${Date.now()}`;
-      const updateResult = await query(
-        `UPDATE payments SET status = 'paid', reference = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-        [reference, existing.id]
-      );
-      payment = formatPayment(updateResult.rows[0]);
+      const { data: updatedRow, error: updateError } = await supabase
+        .from('payments')
+        .update({ status: 'paid', reference, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .maybeSingle();
+      if (updateError) throw new Error(updateError.message);
+      payment = formatPayment(updatedRow);
 
       // Update user's payment status
-      await query(`UPDATE users SET payment_status = 'paid' WHERE id = $1`, [userId]);
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({ payment_status: 'paid' })
+        .eq('id', userId);
+      if (userUpdateError) throw new Error(userUpdateError.message);
 
       // Sync team member entry
-      await query(`UPDATE team_members SET payment_status = 'paid' WHERE user_id = $1`, [userId]);
+      const { error: memberUpdateError } = await supabase
+        .from('team_members')
+        .update({ payment_status: 'paid' })
+        .eq('user_id', userId);
+      if (memberUpdateError) throw new Error(memberUpdateError.message);
     } else {
       // Create new payment
       const paymentId = uuidv4();
       const reference = `REF${Date.now()}`;
-      const insertResult = await query(
-        `INSERT INTO payments (id, user_id, amount, currency, status, reference) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [paymentId, user.id, 200, 'INR', 'paid', reference]
-      );
-      payment = formatPayment(insertResult.rows[0]);
+      const { data: insertedRow, error: insertError } = await supabase
+        .from('payments')
+        .insert({
+          id: paymentId,
+          user_id: user.id,
+          amount: 200,
+          currency: 'INR',
+          status: 'paid',
+          reference
+        })
+        .select()
+        .maybeSingle();
+      if (insertError) throw new Error(insertError.message);
+      payment = formatPayment(insertedRow);
 
       // Update user's payment status
-      await query(`UPDATE users SET payment_status = 'paid' WHERE id = $1`, [userId]);
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({ payment_status: 'paid' })
+        .eq('id', userId);
+      if (userUpdateError) throw new Error(userUpdateError.message);
 
       // Sync team member entry
-      await query(`UPDATE team_members SET payment_status = 'paid' WHERE user_id = $1`, [userId]);
+      const { error: memberUpdateError } = await supabase
+        .from('team_members')
+        .update({ payment_status: 'paid' })
+        .eq('user_id', userId);
+      if (memberUpdateError) throw new Error(memberUpdateError.message);
     }
 
     res.status(200).json({

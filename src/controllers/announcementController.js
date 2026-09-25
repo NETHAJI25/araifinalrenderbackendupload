@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const { query } = require('../config/db');
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 
 function formatAnnouncement(row) {
   if (!row) return row;
@@ -19,8 +20,12 @@ function formatAnnouncement(row) {
  */
 exports.getAll = async (req, res) => {
   try {
-    const result = await query('SELECT * FROM announcements ORDER BY created_at DESC');
-    const announcementsArray = result.rows.map(formatAnnouncement);
+    const { data, error } = await supabase
+      .from('announcements')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    const announcementsArray = data.map(formatAnnouncement);
 
     res.status(200).json({
       success: true,
@@ -40,8 +45,13 @@ exports.getAll = async (req, res) => {
  */
 exports.getPublished = async (req, res) => {
   try {
-    const result = await query("SELECT * FROM announcements WHERE status = 'published' ORDER BY created_at DESC");
-    const publishedAnnouncements = result.rows.map(formatAnnouncement);
+    const { data, error } = await supabase
+      .from('announcements')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    const publishedAnnouncements = data.map(formatAnnouncement);
 
     res.status(200).json({
       success: true,
@@ -72,14 +82,20 @@ exports.create = async (req, res) => {
     }
 
     const id = uuidv4();
-    const result = await query(
-      `INSERT INTO announcements (id, title, content, priority, status)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [id, title, content, priority || 'Normal', status || 'published']
-    );
+    const { data, error } = await supabase
+      .from('announcements')
+      .insert({
+        id,
+        title,
+        content,
+        priority: priority || 'Normal',
+        status: status || 'published'
+      })
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
 
-    const savedAnnouncement = formatAnnouncement(result.rows[0]);
+    const savedAnnouncement = formatAnnouncement(data);
 
     res.status(201).json({
       success: true,
@@ -111,45 +127,46 @@ exports.update = async (req, res) => {
     }
 
     // Get announcement
-    const existing = await query('SELECT * FROM announcements WHERE id = $1', [id]);
-    if (existing.rows.length === 0) {
+    const { data: existing, error: fetchError } = await supabase
+      .from('announcements')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (fetchError) throw new Error(fetchError.message);
+    if (!existing) {
       return res.status(404).json({
         success: false,
         message: 'Announcement not found'
       });
     }
 
-    // Build dynamic SET clause for allowed fields
-    const fields = [];
-    const values = [];
-    let idx = 1;
+    // Build update object for allowed fields
+    const updateFields = {};
 
     if (updates.title !== undefined) {
-      fields.push(`title = $${idx++}`);
-      values.push(updates.title);
+      updateFields.title = updates.title;
     }
     if (updates.content !== undefined) {
-      fields.push(`content = $${idx++}`);
-      values.push(updates.content);
+      updateFields.content = updates.content;
     }
     if (updates.priority !== undefined) {
-      fields.push(`priority = $${idx++}`);
-      values.push(updates.priority);
+      updateFields.priority = updates.priority;
     }
     if (updates.status !== undefined) {
-      fields.push(`status = $${idx++}`);
-      values.push(updates.status);
+      updateFields.status = updates.status;
     }
 
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
+    updateFields.updated_at = new Date().toISOString();
 
-    const result = await query(
-      `UPDATE announcements SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
-      values
-    );
+    const { data, error } = await supabase
+      .from('announcements')
+      .update(updateFields)
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
 
-    const updatedAnnouncement = formatAnnouncement(result.rows[0]);
+    const updatedAnnouncement = formatAnnouncement(data);
 
     res.status(200).json({
       success: true,
@@ -180,8 +197,13 @@ exports.delete = async (req, res) => {
     }
 
     // Check if announcement exists
-    const existing = await query('SELECT id FROM announcements WHERE id = $1', [id]);
-    if (existing.rows.length === 0) {
+    const { data: existing, error: fetchError } = await supabase
+      .from('announcements')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle();
+    if (fetchError) throw new Error(fetchError.message);
+    if (!existing) {
       return res.status(404).json({
         success: false,
         message: 'Announcement not found'
@@ -189,7 +211,11 @@ exports.delete = async (req, res) => {
     }
 
     // Delete announcement
-    await query('DELETE FROM announcements WHERE id = $1', [id]);
+    const { error } = await supabase
+      .from('announcements')
+      .delete()
+      .eq('id', id);
+    if (error) throw new Error(error.message);
 
     res.status(200).json({
       success: true,
