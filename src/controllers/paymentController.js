@@ -6,6 +6,43 @@ const bcrypt = require('bcryptjs');
 const db = firebaseAdmin.database();
 const paymentsRef = db.ref('payments');
 const usersRef = db.ref('users');
+const teamsRef = db.ref('teams');
+
+/**
+ * Sync a user's paid status into their team member entry
+ */
+async function syncTeamMemberPayment(userId) {
+  try {
+    const userSnapshot = await usersRef.child(userId).once('value');
+    if (!userSnapshot.exists()) return;
+    const user = userSnapshot.val();
+    if (!user.teamId) return;
+
+    const teamsSnapshot = await teamsRef.orderByChild('teamId').equalTo(user.teamId).once('value');
+    if (!teamsSnapshot.exists()) return;
+
+    const updates = [];
+    teamsSnapshot.forEach((childSnapshot) => {
+      const teamKey = childSnapshot.key;
+      const team = childSnapshot.val();
+      const memberIdx = (team.members || []).findIndex((m) => m.userId === userId);
+      if (memberIdx >= 0 && team.members[memberIdx].paymentStatus !== 'paid') {
+        updates.push(
+          teamsRef.child(teamKey).child('members').child(memberIdx).update({
+            paymentStatus: 'paid'
+          })
+        );
+        updates.push(
+          teamsRef.child(teamKey).update({ updatedAt: new Date().toISOString() })
+        );
+      }
+      return true;
+    });
+    await Promise.all(updates);
+  } catch (err) {
+    console.error('syncTeamMemberPayment error:', err);
+  }
+}
 
 /**
  * Create a new payment
@@ -77,6 +114,9 @@ exports.createPayment = async (req, res) => {
 
           // Update user's payment status
           await usersRef.child(userId).update({ paymentStatus: 'paid' });
+
+          // Sync team member entry
+          await syncTeamMemberPayment(userId);
         }
       } catch (error) {
         console.error('Payment verification timeout error:', error);
@@ -224,6 +264,9 @@ exports.mockCompletePay = async (req, res) => {
 
       // Update user's payment status
       await usersRef.child(userId).update({ paymentStatus: 'paid' });
+
+      // Sync team member entry
+      await syncTeamMemberPayment(userId);
     } else {
       // Create new payment
       paymentId = uuidv4();
@@ -242,6 +285,9 @@ exports.mockCompletePay = async (req, res) => {
 
       // Update user's payment status
       await usersRef.child(userId).update({ paymentStatus: 'paid' });
+
+      // Sync team member entry
+      await syncTeamMemberPayment(userId);
 
       payment = newPayment;
     }
