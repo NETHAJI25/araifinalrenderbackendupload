@@ -1,7 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const firebaseAdmin = require('firebase-admin');
-const { sendContactNotification } = require('../utils/mailer');
+const { sendContactNotification, verifyMailConfig } = require('../utils/mailer');
+
+// GET /api/contact/mail-status - check SMTP config (no secrets exposed)
+router.get('/mail-status', async (req, res) => {
+  try {
+    const result = await verifyMailConfig();
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    res.status(200).json({ success: true, data: { configured: false, error: error.message } });
+  }
+});
 
 // POST /api/contact - Submit contact form
 router.post('/', async (req, res) => {

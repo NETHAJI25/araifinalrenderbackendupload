@@ -60,4 +60,21 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-module.exports = { sendContactNotification };
+/**
+ * Verify SMTP connectivity without exposing secrets.
+ */
+async function verifyMailConfig() {
+  const configured = Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+  if (!configured) {
+    return { configured: false, reason: 'GMAIL_USER or GMAIL_APP_PASSWORD missing' };
+  }
+  const mailer = getTransporter();
+  try {
+    await mailer.verify();
+    return { configured: true, smtp: 'verified', userSet: true };
+  } catch (err) {
+    return { configured: true, smtp: 'failed', error: err.message };
+  }
+}
+
+module.exports = { sendContactNotification, verifyMailConfig };
