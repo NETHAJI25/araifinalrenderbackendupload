@@ -17,6 +17,7 @@ export interface User {
   createdAt: string;
   linkedin?: string;
   github?: string;
+  token?: string;
 }
 
 // ─── Team ────────────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ export interface Team {
   status: "active" | "inactive" | "rejected" | "complete";
   rejectionReason?: string;
   confirmationStatus: "pending" | "ready" | "confirmed";
-  round?: 1 | 2;
+  round: 1 | 2;
   createdAt: string;
   updatedAt: string;
 }
@@ -50,10 +51,16 @@ export interface Team {
 export interface Payment {
   id: string;
   userId: string;
+  teamId?: string | null;
   amount: number;
   currency: string;
-  status: "pending" | "processing" | "paid" | "failed" | "verified";
+  status: "created" | "initiated" | "pending" | "processing" | "paid" | "failed" | "verified" | "expired";
   reference: string | null;
+  cfOrderId?: string | null;
+  cfPaymentId?: string | null;
+  paymentSessionId?: string | null;
+  orderId?: string | null;
+  round?: number;
   createdAt: string;
   updatedAt: string;
 }

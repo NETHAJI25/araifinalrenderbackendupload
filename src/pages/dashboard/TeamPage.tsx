@@ -7,13 +7,14 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { teamService } from "../../services/teamService";
-import { paymentService } from "../../services/paymentService";
+import { paymentService } from "../../services/cashfreeService";
 import { problemStatements } from "../../data/problemStatements";
 import { Modal, ConfirmDialog } from "../../components/ui/Modal";
 import { Input, Select } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { paymentStatusLabel } from "../../utils/formatters";
+import { CashfreePaymentModal } from "../../components/payment/CashfreePaymentModal";
 import type { Team } from "../../types";
 import { eventConfig } from "../../config/eventConfig";
 
@@ -39,6 +40,12 @@ export default function TeamPage() {
   const [copied, setCopied] = useState(false);
   const [formError, setFormError] = useState("");
   const [joinError, setJoinError] = useState("");
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentOrder, setPaymentOrder] = useState<{
+    orderId: string;
+    paymentSessionId: string;
+    amount: number;
+  } | null>(null);
 
   const isPaid = user?.paymentStatus === "paid" || user?.paymentStatus === "verified";
   const isLeader = team?.leaderId === user?.id;
@@ -107,27 +114,51 @@ export default function TeamPage() {
   }
 
   async function handlePayment() {
+    if (!user) return;
     setPayLoading(true);
     try {
-      await paymentService.mockCompletePay();
-      refreshUser();
-      // Update member status in local team state
-      if (team && user) {
-        const updated = { ...team };
-        const memberIdx = updated.members.findIndex((m) => m.userId === user.id);
-        if (memberIdx >= 0) updated.members[memberIdx].paymentStatus = "paid";
-        
-        // If round 1 leader payment, update team round to 2
-        if (isLeader && isRound1) {
-          updated.round = 2;
-        }
-        setTeam(updated);
-      }
-      const fee = isRound1 ? round1Fee : round2Fee;
-      addToast({ type: "success", title: "Payment successful!", message: `₹${fee} registration fee paid.` });
+      const isRound1Payment = isLeader && isRound1;
+      const amount = isRound1Payment ? round1Fee : round2Fee;
+      const round = isRound1Payment ? 1 : 2;
+      
+      const order = await paymentService.createPaymentOrder(amount, round);
+      setPaymentOrder({
+        orderId: order.orderId,
+        paymentSessionId: order.paymentSessionId,
+        amount: order.amount
+      });
+      setPaymentModalOpen(true);
     } catch (e: unknown) {
-      addToast({ type: "error", title: "Payment failed", message: e instanceof Error ? e.message : "Try again." });
-    } finally { setPayLoading(false); }
+      addToast({ type: "error", title: "Payment initialization failed", message: e instanceof Error ? e.message : "Try again." });
+      setPayLoading(false);
+    }
+  }
+
+  function handlePaymentSuccess(_paymentData: any) {
+    setPaymentModalOpen(false);
+    setPaymentOrder(null);
+    setPayLoading(false);
+    refreshUser();
+    if (team && user) {
+      const updated = { ...team };
+      const memberIdx = updated.members.findIndex((m) => m.userId === user.id);
+      if (memberIdx >= 0) updated.members[memberIdx].paymentStatus = "paid";
+      
+      // If round 1 leader payment, update team round to 2
+      if (isLeader && isRound1) {
+        updated.round = 2;
+      }
+      setTeam(updated);
+    }
+    const fee = isLeader && isRound1 ? round1Fee : round2Fee;
+    addToast({ type: "success", title: "Payment successful!", message: `₹${fee} registration fee paid.` });
+  }
+
+  function handlePaymentError(error: string) {
+    setPaymentModalOpen(false);
+    setPaymentOrder(null);
+    setPayLoading(false);
+    addToast({ type: "error", title: "Payment failed", message: error });
   }
 
   async function handleCompleteTeam() {
@@ -531,6 +562,26 @@ export default function TeamPage() {
         message="Once confirmed, your team is finalized and submission will be unlocked for the Team Leader. Are you ready?"
         confirmLabel="Confirm Team" loading={actionLoading}
       />
+
+      {/* Cashfree Payment Modal */}
+      {paymentOrder && (
+        <CashfreePaymentModal
+          isOpen={paymentModalOpen}
+          onClose={() => {
+            setPaymentModalOpen(false);
+            setPaymentOrder(null);
+            setPayLoading(false);
+          }}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+          amount={paymentOrder.amount}
+          orderId={paymentOrder.orderId}
+          paymentSessionId={paymentOrder.paymentSessionId}
+          customerName={user?.name || ""}
+          customerEmail={user?.email || ""}
+          customerPhone={user?.phone || ""}
+        />
+      )}
     </>
   );
 }

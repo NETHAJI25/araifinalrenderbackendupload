@@ -1,24 +1,7 @@
 import type { Payment } from "../types";
 import { authService } from "./authService";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const PAYMENTS_KEY = "ia2_payments";
-
-async function syncPaymentWithBackend(): Promise<void> {
-  const token = authService.getToken();
-  if (!token) return;
-  try {
-    await fetch(`${API_URL}/api/payments/mock-complete`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  } catch (err) {
-    console.warn("Backend payment sync failed (non-blocking):", err);
-  }
-}
 
 function getPayments(): Payment[] {
   const raw = localStorage.getItem(PAYMENTS_KEY);
@@ -94,8 +77,6 @@ export const paymentService = {
     await new Promise((r) => setTimeout(r, 1500));
     const user = authService.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
-    // Sync with backend/Firebase so admin + team status stay consistent
-    await syncPaymentWithBackend();
     const payments = getPayments();
     const existing = payments.find((p) => p.userId === user.id);
     if (existing) {

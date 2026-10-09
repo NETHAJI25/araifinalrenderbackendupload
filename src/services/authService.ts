@@ -2,10 +2,9 @@ import { mockUsers } from "../data/mockUsers";
 import type { User } from "../types";
 import { eventConfig } from "../config/eventConfig";
 
-const MOCK_MODE = false;
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const MOCK_MODE = false; // Using real backend authentication
+
 const SESSION_KEY = "ia2_session";
-const TOKEN_KEY = "ia2_token";
 
 function getUserRole(email: string): "admin" | "participant" {
   const normalized = (email || "").trim().toLowerCase();
@@ -15,32 +14,27 @@ function getUserRole(email: string): "admin" | "participant" {
   return isAdmin ? "admin" : "participant";
 }
 
-function saveSession(user: User, token?: string) {
+function saveSession(user: User) {
   localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-  if (token) localStorage.setItem(TOKEN_KEY, token);
 }
 
 function clearSession() {
   localStorage.removeItem(SESSION_KEY);
-  localStorage.removeItem(TOKEN_KEY);
-}
-
-function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
 }
 
 export const authService = {
-  async login(email: string, password: string): Promise<User> {
+  async login(email: string, _password: string): Promise<User> {
     if (MOCK_MODE) {
       await new Promise((r) => setTimeout(r, 800));
       
       const role = getUserRole(email);
       if (role === "admin") {
-        if (email.trim().toLowerCase() === "contact11induskiller@gmail.com".toLowerCase() && password !== "admin123") {
+        if (email.trim().toLowerCase() === "contact11induskiller@gmail.com".toLowerCase() && _password !== "admin123") {
           throw new Error("Invalid email or password.");
         }
       }
 
+      // Try to find a mock user case-insensitively
       const found = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
       if (!found) {
         const genericUser: User = {
@@ -69,16 +63,7 @@ export const authService = {
       saveSession(found);
       return found;
     }
-
-    const res = await fetch(`${API_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Login failed");
-    saveSession(data.data.user, data.data.token);
-    return data.data.user;
+    throw new Error("Firebase auth not yet implemented");
   },
 
   async register(data: Partial<User> & { password: string }): Promise<User> {
@@ -106,27 +91,11 @@ export const authService = {
       saveSession(newUser);
       return newUser;
     }
-
-    const res = await fetch(`${API_URL}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.message || "Registration failed");
-    saveSession(result.data.user, result.data.token);
-    return result.data.user;
+    throw new Error("Firebase auth not yet implemented");
   },
 
   async logout(): Promise<void> {
-    if (!MOCK_MODE) {
-      try {
-        await fetch(`${API_URL}/api/auth/logout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
-      } catch { /* ignore */ }
-    }
+    await new Promise((r) => setTimeout(r, 300));
     clearSession();
   },
 
@@ -141,6 +110,7 @@ export const authService = {
   },
 
   async sendOTP(_phone: string): Promise<void> {
+    // Placeholder for Firebase phone OTP
     await new Promise((r) => setTimeout(r, 500));
   },
 
@@ -154,22 +124,5 @@ export const authService = {
     const updated = { ...current, ...updates };
     saveSession(updated);
     return updated;
-  },
-
-  async getAllUsers(): Promise<User[]> {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const res = await fetch(`${API_URL}/api/auth/users`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to fetch users");
-    return data.data;
-  },
-
-  getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
   },
 };

@@ -1,88 +1,56 @@
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { authService } from "../../services/authService";
+import { mockUsers } from "../../data/mockUsers";
 import { teamService } from "../../services/teamService";
-import type { User, Team } from "../../types";
-
-interface ParticipantRow {
-  id: string;
-  name: string;
-  email: string;
-  college: string;
-  course?: string;
-  year?: string;
-  role: string;
-  teamRole: string;
-  teamName: string;
-  teamId: string;
-  problemStatement: string;
-  paymentStatus: string;
-  status: string;
-  submissionEligibility: string;
-}
 
 export default function AdminParticipants() {
-  const [participants, setParticipants] = useState<ParticipantRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
+  const [participants, setParticipants] = useState<any[]>([]);
   const [query, setQuery] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All");
   const [teamFilter, setTeamFilter] = useState("All");
   const [roleFilter, setRoleFilter] = useState("All");
-  const [selectedUser, setSelectedUser] = useState<ParticipantRow | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
 
   useEffect(() => {
     const loadParticipants = async () => {
-      setIsLoading(true);
-      setLoadError("");
-      try {
-        const [users, teams]: [User[], Team[]] = await Promise.all([
-          authService.getAllUsers(),
-          teamService.getAll(),
-        ]);
-
-        const combined: ParticipantRow[] = users.map((user) => {
-          const team = teams.find((t) => t.members.some((m) => m.userId === user.id));
-          const memberData = team?.members.find((m) => m.userId === user.id);
-
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            college: user.college,
-            course: user.course,
-            year: user.year,
-            role: user.role,
-            teamRole: memberData?.role || "N/A",
-            teamName: team?.teamName || "No Team",
-            teamId: team?.teamId || "N/A",
-            problemStatement: team?.problemStatementTitle || "N/A",
-            paymentStatus: user.paymentStatus,
-            status: user.profileCompleted ? "Profile Complete" : "Incomplete",
-            submissionEligibility: team?.confirmationStatus === 'confirmed' ? "Eligible" : "Not Eligible"
-          };
-        });
-
-        setParticipants(combined);
-      } catch (err) {
-        console.error(err);
-        setLoadError(err instanceof Error ? err.message : "Failed to load participants");
-      } finally {
-        setIsLoading(false);
-      }
+      const teams = await teamService.getAll();
+      
+      const combinedParticipants = mockUsers.map(user => {
+        const team = teams.find(t => t.members.some(m => m.userId === user.id));
+        const memberData = team?.members.find(m => m.userId === user.id);
+        
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          college: user.college,
+          course: user.course,
+          year: user.year,
+          role: user.role, // App role (admin/participant)
+          teamRole: memberData?.role || "N/A",
+          teamName: team?.teamName || "No Team",
+          teamId: team?.teamId || "N/A",
+          problemStatement: team?.problemStatementTitle || "N/A",
+          paymentStatus: user.paymentStatus,
+          status: user.profileCompleted ? "Profile Complete" : "Incomplete",
+          submissionEligibility: team?.confirmationStatus === 'confirmed' ? "Eligible" : "Not Eligible"
+        };
+      });
+      
+      setParticipants(combinedParticipants);
     };
 
     loadParticipants();
   }, []);
 
   const filtered = participants.filter(p => {
-    const matchesQuery = p.name.toLowerCase().includes(query.toLowerCase()) ||
+    const matchesQuery = p.name.toLowerCase().includes(query.toLowerCase()) || 
       p.email.toLowerCase().includes(query.toLowerCase()) ||
       p.college.toLowerCase().includes(query.toLowerCase()) ||
       p.teamName.toLowerCase().includes(query.toLowerCase());
-
+      
     const matchesPayment = paymentFilter === "All" || p.paymentStatus.toLowerCase() === paymentFilter.toLowerCase();
-    const matchesTeam = teamFilter === "All" ||
+    const matchesTeam = teamFilter === "All" || 
       (teamFilter === "Has Team" && p.teamName !== "No Team") ||
       (teamFilter === "No Team" && p.teamName === "No Team");
     const matchesRole = roleFilter === "All" || p.teamRole.toLowerCase().includes(roleFilter.toLowerCase());
@@ -95,16 +63,14 @@ export default function AdminParticipants() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Manage Participants</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            View all registered users{participants.length > 0 ? ` (${participants.length})` : "."}
-          </p>
+          <p className="text-gray-500 text-sm mt-1">View all registered users.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="search"
-              placeholder="Search name, email, college, team..."
+            <input 
+              type="search" 
+              placeholder="Search name, email, college, team..." 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="input-field pl-9 text-sm w-full sm:w-64"
@@ -143,72 +109,52 @@ export default function AdminParticipants() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center">
-                    <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              {filtered.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50/50">
+                  <td className="px-5 py-4">
+                    <p className="font-bold text-gray-900">{user.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 max-w-[200px] truncate" title={user.college}>{user.college}</td>
+                  <td className="px-5 py-4 text-gray-700 max-w-[200px] truncate" title={user.teamName}>{user.teamName}</td>
+                  <td className="px-5 py-4">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+                      user.paymentStatus === 'verified' || user.paymentStatus === 'paid'
+                        ? 'bg-green-50 text-green-700 border-green-200' 
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {user.paymentStatus}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">
+                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      user.status === 'Profile Complete' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <button 
+                      onClick={() => setSelectedUser(user)}
+                      className="text-primary hover:text-primary-dark font-medium text-sm"
+                    >
+                      View Details
+                    </button>
                   </td>
                 </tr>
-              ) : loadError ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-red-500">
-                    {loadError}
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
-                    No participants found.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50/50">
-                    <td className="px-5 py-4">
-                      <p className="font-bold text-gray-900">{user.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{user.email}</p>
-                    </td>
-                    <td className="px-5 py-4 text-gray-700 max-w-[200px] truncate" title={user.college}>{user.college}</td>
-                    <td className="px-5 py-4 text-gray-700 max-w-[200px] truncate" title={user.teamName}>{user.teamName}</td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
-                        user.paymentStatus === 'verified' || user.paymentStatus === 'paid'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}>
-                        {user.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        user.status === 'Profile Complete' ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <button
-                        onClick={() => setSelectedUser(user)}
-                        className="text-primary hover:text-primary-dark font-medium text-sm"
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
       </div>
-
+      
       {/* Modal for Details */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">

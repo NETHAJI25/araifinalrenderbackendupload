@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight, MapPin, Calendar, Clock, Users, IndianRupee, GraduationCap,
-  ExternalLink, Mail, Phone, Share2, ChevronDown, UserPlus, CreditCard, FolderPlus, CheckCircle, Send, Briefcase, Lightbulb, Globe, Compass, Gift, FileText
+  ExternalLink, Mail, Phone, Share2, ChevronDown, UserPlus, CreditCard, FolderPlus, CheckCircle, Send, Briefcase, Lightbulb, Globe, Compass, Gift
 } from "lucide-react";
 import { SplitText } from "../components/animations/SplitText";
 import { CountUp } from "../components/animations/CountUp";
@@ -12,9 +12,8 @@ import { eventConfig } from "../config/eventConfig";
 import { organizers } from "../data/organizers";
 import { sponsors } from "../data/sponsors";
 import { faqs, faqCategories } from "../data/faq";
+import { documents } from "../data/documents";
 import iaWbImage from "../assets/ia wb.png";
-import { contactService } from "../services/contactService";
-import { useToast } from "../contexts/ToastContext";
 
 // ─── Animation helpers ────────────────────────────────────────────────────────
 function useFadeUp(i = 0) {
@@ -120,8 +119,8 @@ function HeroSection() {
             >
               {[
                 { icon: <Clock className="w-5 h-5" />, value: "36", label: "HOURS" },
-                { icon: <Users className="w-5 h-5" />, value: "4–6", label: "TEAM SIZE" },
-                { icon: <IndianRupee className="w-5 h-5" />, value: "₹200", label: "ROUND 2 FEE" },
+                { icon: <Users className="w-5 h-5" />, value: "2–6", label: "MEMBERS" },
+                { icon: <IndianRupee className="w-5 h-5" />, value: "₹200", label: "/ PARTICIPANT" },
                 { icon: <GraduationCap className="w-5 h-5" />, value: "OPEN", label: "TO STUDENTS" },
               ].map((s) => (
                 <div key={s.label} className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
@@ -130,22 +129,6 @@ function HeroSection() {
                   <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">{s.label}</p>
                 </div>
               ))}
-            </motion.div>
-
-            {/* Cash Prize Highlight */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.44 }}
-              className="mt-6 p-5 bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-2xl flex items-center justify-center gap-3"
-            >
-              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
-                <IndianRupee className="w-6 h-6 text-amber-600" />
-              </div>
-              <div className="text-center">
-                <p className="text-xs font-bold tracking-widest text-amber-700 uppercase mb-1">Cash Prize</p>
-                <p className="text-2xl font-black text-amber-800">₹1,00,000</p>
-              </div>
             </motion.div>
           </div>
 
@@ -173,7 +156,7 @@ function RegistrationCTA() {
           <div>
             <h2 className="text-2xl font-bold text-white mb-2 md:text-left">Ready to build something that matters?</h2>
             <p className="text-violet-200 text-sm max-w-xl md:text-left">
-              Register individually, form a team of 4–6, select your challenge, and innovate for 36 hours.
+              Register individually, form a team of 2–6, select your challenge, and innovate for 36 hours.
             </p>
           </div>
           <Link to="/login" className="shrink-0">
@@ -202,15 +185,15 @@ function AboutSection() {
             />
             <div className="mt-8 space-y-4 text-gray-600 text-sm leading-relaxed md:text-left">
               <p>Innovators Arena 2.0 brings together student innovators from across the country to tackle a curated set of challenges spanning technology, sustainability, healthcare, agriculture, and more.</p>
-              <p>Teams of 4–6 members design, build, and present solutions over 36 intensive hours. The event is open to all students regardless of institution, branch, or year of study.</p>
+              <p>Teams of 2–6 members design, build, and present solutions over 36 intensive hours. The event is open to all students regardless of institution, branch, or year of study.</p>
               <p>The final round takes place in the First Week of January 2027.</p>
             </div>
           </motion.div>
           <div className="grid grid-cols-2 gap-4">
             {[
               { value: 36, unit: "HOURS", desc: "Continuous innovation" },
-              { value: 6, prefix: "4-", unit: "MEMBERS", desc: "Team size (4-6)" },
-              { value: 200, prefix: "₹", unit: "ROUND 2 FEE", desc: "Per participant" },
+              { value: 6, prefix: "2-", unit: "MEMBERS", desc: "Team collaboration" },
+              { value: 200, prefix: "₹", unit: "PER PARTICIPANT", desc: "Individual fee" },
               { value: 240, suffix: "+", unit: "PROBLEMS", desc: "Across 16 themes" },
             ].map((s, i) => (
               <motion.div key={s.unit} {...useFadeUp(i)} className="card p-5 hover:border-violet-200 transition-colors">
@@ -265,12 +248,11 @@ function HowItWorksSection() {
   const steps = [
     { num: "01", icon: <UserPlus className="w-6 h-6" />, title: "Create Account", desc: "Register individually with your academic details." },
     { num: "02", icon: <CheckCircle className="w-6 h-6" />, title: "Complete Profile", desc: "Fill in required personal and academic information." },
-    { num: "03", icon: <FolderPlus className="w-6 h-6" />, title: "Create / Join Team", desc: "Form a team of 4–6 members using your Team ID." },
-    { num: "04", icon: <Users className="w-6 h-6" />, title: "Complete Team", desc: "Team Leader marks team as complete." },
-    { num: "05", icon: <FileText className="w-6 h-6" />, title: "Round 1: PPT Submit", desc: "Team Leader pays ₹100 & submits PPT for evaluation." },
-    { num: "06", icon: <CheckCircle className="w-6 h-6" />, title: "Round 1 Results", desc: "Selected teams advance to Finals (Round 2)." },
-    { num: "07", icon: <CreditCard className="w-6 h-6" />, title: "Round 2: Payment", desc: "All members pay ₹200 each for Finals." },
-    { num: "08", icon: <Send className="w-6 h-6" />, title: "Final Submission", desc: "Team Leader submits final project form." },
+    { num: "03", icon: <FolderPlus className="w-6 h-6" />, title: "Create / Join Team", desc: "Form a team of 2–6 members using your Team ID." },
+    { num: "04", icon: <Users className="w-6 h-6" />, title: "Complete Team", desc: "Ensure all team details and members are ready." },
+    { num: "05", icon: <CreditCard className="w-6 h-6" />, title: "Complete Payment", desc: "Each member pays ₹200 individually." },
+    { num: "06", icon: <CheckCircle className="w-6 h-6" />, title: "Confirm Team", desc: "Team Leader confirms the team is ready." },
+    { num: "07", icon: <Send className="w-6 h-6" />, title: "Submit Project", desc: "Team Leader submits through the official form." },
   ];
   return (
     <section className="py-20 bg-gray-50">
@@ -278,7 +260,7 @@ function HowItWorksSection() {
         <motion.div {...useFadeUp()} className="text-center mb-14">
           <SectionHeader eyebrow="How It Works" title="Your Journey to the Final Round" />
         </motion.div>
-        <div className="hidden md:grid md:grid-cols-8 gap-3">
+        <div className="hidden md:grid md:grid-cols-7 gap-3">
           {steps.map((s, i) => (
             <motion.div key={s.num} {...useFadeUp(i)} className="flex flex-col relative">
               {i < steps.length - 1 && (
@@ -312,23 +294,6 @@ function HowItWorksSection() {
 
 // ─── GUIDELINES ───────────────────────────────────────────────────────────────
 function GuidelinesSection() {
-  const guidelines = [
-    {
-      title: "PPT Format Template",
-      description: "Official presentation template for final project submission. All teams must use this format.",
-      type: "Google Slides / PPTX",
-      path: "https://docs.google.com/presentation/d/1bTUtL_KCMQgRB9ilwnmL-PntFyXofzd4/edit?usp=sharing&ouid=110748840767488667268&rtpof=true&sd=true",
-      icon: <FileText className="w-6 h-6" />
-    },
-    {
-      title: "Hackathon Guidelines",
-      description: "Complete guidelines covering rules, regulations, evaluation criteria, and participant responsibilities.",
-      type: "PDF",
-      path: "https://drive.google.com/file/d/1yovAvdekpyUmSp3nDYbx73_1XgvzzfyK/view?usp=sharing",
-      icon: <FileText className="w-6 h-6" />
-    },
-  ];
-
   return (
     <section id="guidelines" className="py-20 bg-gray-50 scroll-mt-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -336,10 +301,10 @@ function GuidelinesSection() {
           <SectionHeader eyebrow="Resources" title="Guidelines & Documents" />
         </motion.div>
         <div className="grid sm:grid-cols-2 gap-6">
-          {guidelines.map((doc, i) => (
-            <motion.div key={doc.title} {...useFadeUp(i)} className="card p-6 hover:border-violet-200 hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-start gap-4">
-              <div className="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center shrink-0 text-violet-600">
-                {doc.icon}
+          {documents.map((doc, i) => (
+            <motion.div key={doc.id} {...useFadeUp(i)} className="card p-6 hover:border-violet-200 hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-start gap-4">
+              <div className="w-12 h-12 bg-violet-50 rounded-xl flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
               <div className="flex-1 flex flex-col sm:items-start w-full">
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1 sm:text-left w-full">{doc.type}</p>
@@ -371,12 +336,9 @@ function OrganizersSection() {
           <SectionHeader eyebrow="Organizing Team" title="Meet the Team" />
         </motion.div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {organizers.map((org, i) => {
-            // Center the orphan last card on desktop (lg 4-col grid) — mobile/tablet unchanged
-            const isOrphanLast = i === organizers.length - 1 && organizers.length % 4 === 1;
-            return (
+          {organizers.map((org, i) => (
             <motion.div key={org.id} {...useFadeUp(i)}
-              className={`card p-6 flex flex-col items-center text-center hover:border-violet-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full max-w-[340px] mx-auto min-h-[280px]${isOrphanLast ? " lg:col-start-2 lg:col-span-2" : ""}`}>
+              className="card p-6 flex flex-col items-center text-center hover:border-violet-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full max-w-[340px] mx-auto min-h-[280px]">
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-violet-100 mb-5 bg-gray-100 shadow-md">
                 <img src={org.photo} alt={org.name} className="w-full h-full object-cover" />
               </div>
@@ -389,8 +351,7 @@ function OrganizersSection() {
                 <ExternalLink className="w-3.5 h-3.5" /> LinkedIn
               </a>
             </motion.div>
-            );
-          })}
+          ))}
         </div>
       </div>
     </section>
@@ -474,29 +435,7 @@ function FAQSection() {
 // ─── CONTACT ──────────────────────────────────────────────────────────────────
 function ContactSection() {
   const [isSent, setIsSent] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
-  const { addToast } = useToast();
-   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await contactService.sendMessage(formData);
-      setIsSent(true);
-      setFormData({ name: "", email: "", subject: "", message: "" });
-      addToast({ type: "success", title: "Message Sent!", message: "We will get back to you soon." });
-    } catch (error) {
-      addToast({ type: "error", title: "Failed to send", message: error instanceof Error ? error.message : "Please try again." });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
+  
   return (
     <section id="contact" className="py-20 bg-gray-50 scroll-mt-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -508,7 +447,7 @@ function ContactSection() {
             <div className="grid sm:grid-cols-2 gap-5 mb-8">
               {[
                 { icon: <Mail className="w-5 h-5" />, label: "Email", value: eventConfig.contactEmail, href: `mailto:${eventConfig.contactEmail}` },
-                { icon: <Phone className="w-5 h-5" />, label: "Phone", value: "+91 9150569051", href: "tel:+919150569051" },
+                { icon: <Phone className="w-5 h-5" />, label: "Phone", value: `+91 ${eventConfig.contactPhone}`, href: `tel:+91${eventConfig.contactPhone}` },
                 { icon: <ExternalLink className="w-5 h-5" />, label: "LinkedIn", value: "Innovators Arena", href: eventConfig.socialLinks.linkedin },
                 { icon: <Share2 className="w-5 h-5" />, label: "Instagram", value: "@innovatorsarena", href: eventConfig.socialLinks.instagram },
               ].map((item) => (
@@ -539,24 +478,24 @@ function ContactSection() {
                 Message Sent! We will get back to you soon.
               </div>
             ) : (
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setIsSent(true); }}>
               <div>
                 <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input id="contact-name" name="name" type="text" required className="input-field w-full" placeholder="Your full name" value={formData.name} onChange={handleChange} />
+                <input id="contact-name" type="text" required className="input-field w-full" placeholder="Your full name" />
               </div>
               <div>
                 <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input id="contact-email" name="email" type="email" required className="input-field w-full" placeholder="you@example.com" value={formData.email} onChange={handleChange} />
+                <input id="contact-email" type="email" required className="input-field w-full" placeholder="you@example.com" />
               </div>
               <div>
                 <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                <input id="contact-subject" name="subject" type="text" required className="input-field w-full" placeholder="How can we help?" value={formData.subject} onChange={handleChange} />
+                <input id="contact-subject" type="text" required className="input-field w-full" placeholder="How can we help?" />
               </div>
               <div>
                 <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                <textarea id="contact-message" name="message" required rows={4} className="input-field w-full" placeholder="Your message here..." value={formData.message} onChange={handleChange}></textarea>
+                <textarea id="contact-message" required rows={4} className="input-field w-full" placeholder="Your message here..."></textarea>
               </div>
-              <Button type="submit" className="w-full" loading={isSubmitting}>Send Message</Button>
+              <Button type="submit" className="w-full">Send Message</Button>
             </form>
             )}
           </div>

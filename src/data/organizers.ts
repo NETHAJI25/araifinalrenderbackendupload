@@ -3,7 +3,6 @@ import nethaji from "../assets/organisers/Nethaji R.png";
 import aravind from "../assets/organisers/Aravind Muthiah M.png";
 import jaganathan from "../assets/organisers/Jaganathan T.png";
 import vinnarasu from "../assets/organisers/Vinnarasu R.png";
-import haresh from "../assets/organisers/Haresh Kumar N L.jpg";
 
 export interface Organizer {
   id: string;
@@ -41,12 +40,5 @@ export const organizers: Organizer[] = [
     designation: "Vice Chairperson",
     photo: vinnarasu,
     linkedin: "https://www.linkedin.com/in/vinnarasu-r/",
-  },
-  {
-    id: "org5",
-    name: "Haresh Kumar N L",
-    designation: "Secretary",
-    photo: haresh,
-    linkedin: "https://www.linkedin.com/in/haresh-kumar-n-l",
   },
 ];
