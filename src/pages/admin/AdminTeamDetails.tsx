@@ -99,6 +99,7 @@ export default function AdminTeamDetails() {
                       <p className="font-bold text-gray-900">{m.name} <span className="text-xs font-normal text-gray-500 ml-2">{userExt?.email || 'N/A'}</span></p>
                       <p className="text-sm text-gray-600 mt-1">{m.college}</p>
                       <p className="text-xs text-gray-500">{userExt?.course || 'Course N/A'}, {userExt?.year || 'Year N/A'}</p>
+                      <p className="text-xs text-gray-500">📞 {userExt?.phone || 'N/A'}</p>
                     </div>
                     <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2">
                       <span className={`text-xs font-semibold px-2 py-1 rounded-md ${m.role === 'Team Leader' ? 'bg-violet-100 text-violet-700' : 'bg-gray-200 text-gray-700'}`}>{m.role}</span>
