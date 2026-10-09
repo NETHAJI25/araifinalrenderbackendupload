@@ -457,9 +457,6 @@ export default function TeamPage() {
                 </>
               )}
 
-              <p className="text-xs text-gray-400">
-                Note: This is a frontend mock. No real transaction occurs.
-              </p>
             </div>
           )}
 
