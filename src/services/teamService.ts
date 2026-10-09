@@ -29,7 +29,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
 export const teamService = {
   async createTeam(teamName: string, problemStatementId: string | null, problemStatementTitle: string | null): Promise<Team> {
-    const data = await fetchWithAuth("/api/teams/create", {
+    const data = await fetchWithAuth("/api/teams", {
       method: "POST",
       body: JSON.stringify({ teamName, problemStatementId, problemStatementTitle }),
     });
@@ -37,16 +37,15 @@ export const teamService = {
   },
 
   async joinTeam(teamId: string): Promise<Team> {
-    const data = await fetchWithAuth("/api/teams/join", {
+    const data = await fetchWithAuth(`/api/teams/join/${teamId}`, {
       method: "POST",
-      body: JSON.stringify({ teamId }),
     });
     return data.data;
   },
 
   async getMyTeam(): Promise<Team | null> {
     try {
-      const data = await fetchWithAuth("/api/teams/my-team");
+      const data = await fetchWithAuth("/api/teams/my");
       return data.data;
     } catch {
       return null;
