@@ -3,9 +3,8 @@ services:
     name: innovators-arena-backend
     runtime: node
     plan: free
-    rootDir: backend
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: node backend/server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
