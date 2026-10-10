@@ -319,3 +319,18 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ success: false, message: error.message || 'Server error' });
   }
 };
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, name, email, phone, college, payment_status, profile_completed, team_id, created_at');
+
+    if (error) throw new Error(error.message);
+
+    res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Server error' });
+  }
+};
