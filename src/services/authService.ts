@@ -87,7 +87,7 @@ export const authService = {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    const user = { ...data.data, token: data.data.token };
+    const user = { ...data.data.user, token: data.data.token };
     saveSession(user);
     return user;
   },
@@ -122,7 +122,7 @@ export const authService = {
       method: "POST",
       body: JSON.stringify(userData),
     });
-    const user = { ...data.data, token: data.data.token };
+    const user = { ...data.data.user, token: data.data.token };
     saveSession(user);
     return user;
   },
