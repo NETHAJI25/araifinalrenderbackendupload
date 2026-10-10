@@ -7,14 +7,12 @@ const xss = require('xss-clean');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 
-const authRoutes = require('./src/routes/authRoutes');
-const teamRoutes = require('./src/routes/teamRoutes');
-const paymentRoutes = require('./src/routes/paymentRoutes');
-const announcementRoutes = require('./src/routes/announcementRoutes');
-const submissionRoutes = require('./src/routes/submissionRoutes');
-const contactRoutes = require('./src/routes/contactRoutes');
-
-const { setupWebSocket } = require('./utils/websocket');
+const authRoutes = require('./routes/authRoutes');
+const teamRoutes = require('./routes/teamRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
+const submissionRoutes = require('./routes/submissionRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -60,10 +58,4 @@ const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-let io = null;
-if (process.env.ENABLE_WEBSOCKETS === 'true') {
-  io = setupWebSocket(server);
-  console.log('WebSockets enabled');
-}
-
-module.exports = { app, server, io };
+module.exports = { app, server };
