@@ -20,7 +20,7 @@
     "express-rate-limit": "^7.1.5",
 "helmet": "^7.0.0",
   "hpp": "^0.2.3",
-  "xss-clean": "^1.4.1",
+  "xss-clean": "^0.1.4",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.8",
     "uuid": "^9.0.0"
