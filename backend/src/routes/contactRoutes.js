@@ -1,0 +1,70 @@
+const express = require('express');
+const router = express.Router();
+const { v4: uuidv4 } = require('uuid');
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
+const { sendContactNotification } = require('../utils/mailer');
+const { verifyMailConfig } = require('../utils/mailer');
+
+router.get('/mail-status', async (req, res) => {
+  try {
+    const result = await verifyMailConfig();
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    res.status(200).json({ success: true, data: { configured: false, error: error.message } });
+  }
+});
+
+router.post('/', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required: name, email, subject, message'
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format'
+      });
+    }
+
+    const contactId = uuidv4();
+    const { error } = await supabase.from('contacts').insert({
+      id: contactId,
+      name,
+      email,
+      subject,
+      message,
+      status: 'new'
+    });
+    if (error) throw new Error(error.message);
+
+    let emailSent = false;
+    try {
+      emailSent = await sendContactNotification({ name, email, subject, message });
+    } catch (mailErr) {
+      console.error('[MAIL] Failed to send contact notification:', mailErr.message);
+    }
+
+    console.log('New contact form submission:', { name, email, subject, emailSent });
+
+    res.status(201).json({
+      success: true,
+      message: 'Message sent successfully! We will get back to you soon.'
+    });
+  } catch (error) {
+    console.error('Contact form error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send message. Please try again.'
+    });
+  }
+});
+
+module.exports = router;
