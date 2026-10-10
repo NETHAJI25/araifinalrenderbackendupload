@@ -63,17 +63,15 @@ export const teamService = {
   },
 
   async markTeamComplete(teamId: string): Promise<Team> {
-    const data = await fetchWithAuth("/api/teams/complete", {
+    const data = await fetchWithAuth(`/api/teams/${teamId}/complete`, {
       method: "POST",
-      body: JSON.stringify({ teamId }),
     });
     return data.data;
   },
 
   async confirmTeam(teamId: string): Promise<Team> {
-    const data = await fetchWithAuth("/api/teams/confirm", {
+    const data = await fetchWithAuth(`/api/teams/${teamId}/confirm`, {
       method: "POST",
-      body: JSON.stringify({ teamId }),
     });
     return data.data;
   },
