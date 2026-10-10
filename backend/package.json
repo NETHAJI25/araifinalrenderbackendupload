@@ -2,10 +2,9 @@
   "name": "innovators-arena-backend",
   "version": "2.0.0",
   "description": "Cashfree payment gateway integration for Innovators Arena 2.0 hackathon",
-  "main": "server.js",
-  "type": "module",
+  "main": "server.cjs",
   "scripts": {
-    "start": "node server.js",
+    "start": "node server.cjs",
     "dev": "nodemon server.js",
     "test": "jest --testPathPattern='backend/tests' --verbose"
   },
