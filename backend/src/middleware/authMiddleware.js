@@ -29,7 +29,7 @@ function authenticate(req, res, next) {
 
 function authorizeAdmin(req, res, next) {
   try {
-    if (req.user.role !== 'admin') {
+    if (!req.user.role || req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Admin access required' });
     }
     next();

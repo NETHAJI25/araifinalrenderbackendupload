@@ -58,6 +58,7 @@ exports.register = async (req, res) => {
         phone,
         college,
         password: hashedPassword,
+        role: 'team_leader',
         payment_status: 'unpaid',
         profile_completed: false,
         created_at: now,
