@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -6,7 +6,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
 import { IALogoMark } from "../components/ui/IALogo";
+import { authService } from "../services/authService";
 import { eventConfig } from "../config/eventConfig";
 
 interface FormData {
@@ -23,9 +25,89 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Forgot password (mobile number + on-screen OTP)
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState<"phone" | "reset">("phone");
+  const [forgotPhone, setForgotPhone] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotNewPassword, setForgotNewPassword] = useState("");
+  const [forgotConfirm, setForgotConfirm] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/dashboard";
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+
+  function resetForgotState() {
+    setForgotStep("phone");
+    setForgotPhone("");
+    setGeneratedOtp("");
+    setForgotOtp("");
+    setForgotNewPassword("");
+    setForgotConfirm("");
+    setForgotLoading(false);
+  }
+
+  function closeForgot() {
+    setForgotOpen(false);
+    resetForgotState();
+  }
+
+  async function handleSendOtp(e: FormEvent) {
+    e.preventDefault();
+    const phone = forgotPhone.trim();
+    if (!phone) {
+      addToast({ type: "error", title: "Mobile number required", message: "Please enter your registered mobile number." });
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const otp = await authService.sendOTP(phone);
+      setGeneratedOtp(otp);
+      setForgotStep("reset");
+      addToast({ type: "success", title: "OTP generated", message: "Enter the OTP shown below to reset your password." });
+    } catch (err) {
+      addToast({
+        type: "error",
+        title: "Couldn't generate OTP",
+        message: err instanceof Error ? err.message : "Please try again.",
+      });
+    } finally {
+      setForgotLoading(false);
+    }
+  }
+
+  async function handleResetPassword(e: FormEvent) {
+    e.preventDefault();
+    const phone = forgotPhone.trim();
+    if (!forgotOtp.trim()) {
+      addToast({ type: "error", title: "OTP required", message: "Please enter the OTP." });
+      return;
+    }
+    if (forgotNewPassword.length < 6) {
+      addToast({ type: "error", title: "Password too short", message: "Password must be at least 6 characters." });
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirm) {
+      addToast({ type: "error", title: "Passwords don't match", message: "Please re-enter both passwords." });
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await authService.resetPassword(phone, forgotOtp.trim(), forgotNewPassword);
+      addToast({ type: "success", title: "Password updated", message: "You can now sign in with your new password." });
+      closeForgot();
+    } catch (err) {
+      addToast({
+        type: "error",
+        title: "Reset failed",
+        message: err instanceof Error ? err.message : "Please try again.",
+      });
+    } finally {
+      setForgotLoading(false);
+    }
+  }
 
   async function onSubmit(data: FormData) {
     setIsLoading(true);
@@ -96,7 +178,11 @@ export default function LoginPage() {
                   <input type="checkbox" className="w-4 h-4 text-violet-600 rounded border-gray-300 focus:ring-violet-500" {...register("rememberMe")} />
                   <span className="text-sm text-gray-600">Remember me</span>
                 </label>
-                <button type="button" className="text-sm text-violet-700 hover:underline font-medium focus:outline-none">
+                <button
+                  type="button"
+                  onClick={() => setForgotOpen(true)}
+                  className="text-sm text-violet-700 hover:underline font-medium focus:outline-none"
+                >
                   Forgot password?
                 </button>
               </div>
@@ -118,6 +204,80 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={forgotOpen}
+        onClose={closeForgot}
+        title={forgotStep === "phone" ? "Reset your password" : "Enter OTP & new password"}
+        size="sm"
+      >
+        {forgotStep === "phone" ? (
+          <form onSubmit={handleSendOtp} className="space-y-5">
+            <p className="text-sm text-gray-500">
+              Enter the mobile number you registered with. We'll generate an OTP to verify it's you.
+            </p>
+            <Input
+              label="Mobile Number"
+              type="tel"
+              inputMode="numeric"
+              placeholder="e.g. 9876543210"
+              required
+              value={forgotPhone}
+              onChange={(e) => setForgotPhone(e.target.value)}
+            />
+            <Button type="submit" variant="primary" size="lg" loading={forgotLoading} className="w-full">
+              Generate OTP
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleResetPassword} className="space-y-5">
+            <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-center">
+              <p className="text-xs font-medium uppercase tracking-wide text-violet-700">Your OTP</p>
+              <p className="mt-1 text-2xl font-black tracking-[0.3em] text-violet-800">{generatedOtp}</p>
+              <p className="mt-1 text-xs text-violet-600">Valid for 10 minutes</p>
+            </div>
+
+            <Input
+              label="OTP"
+              inputMode="numeric"
+              placeholder="Enter the 6-digit OTP"
+              required
+              value={forgotOtp}
+              onChange={(e) => setForgotOtp(e.target.value)}
+            />
+            <Input
+              label="New Password"
+              type="password"
+              placeholder="At least 6 characters"
+              required
+              autoComplete="new-password"
+              value={forgotNewPassword}
+              onChange={(e) => setForgotNewPassword(e.target.value)}
+            />
+            <Input
+              label="Confirm New Password"
+              type="password"
+              placeholder="Re-enter new password"
+              required
+              autoComplete="new-password"
+              value={forgotConfirm}
+              onChange={(e) => setForgotConfirm(e.target.value)}
+            />
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => { setForgotStep("phone"); setForgotOtp(""); }}
+                className="text-sm font-medium text-gray-500 hover:text-gray-700"
+              >
+                ← Change number
+              </button>
+              <Button type="submit" variant="primary" loading={forgotLoading} className="px-5">
+                Reset Password
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </>
   );
 }

@@ -221,59 +221,74 @@ exports.updateProfile = async (req, res) => {
 
 exports.sendOTP = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, phone } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Email is required' });
+    if (!email && !phone) {
+      return res.status(400).json({ success: false, message: 'Mobile number or email is required' });
     }
+
+    const column = phone ? 'phone' : 'email';
+    const value = phone ? String(phone).trim() : email;
 
     const { data: existingUser, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email)
+      .eq(column, value)
       .maybeSingle();
 
     if (userError) throw new Error(userError.message);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: phone ? 'No account found with this mobile number' : 'No account found with this email'
+      });
+    }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const now = new Date().toISOString();
 
     await supabase
       .from('users')
       .update({ otp, otp_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() })
-      .eq('email', email);
+      .eq('id', existingUser.id);
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@innovatorsarena.com';
-    const { data: settings, error: settingError } = await supabase
-      .from('system_settings')
-      .select('*')
-      .maybeSingle();
+    // Email delivery is only attempted when an email address and a mail key are available.
+    if (email && process.env.RESEND_API_KEY) {
+      const { data: settings, error: settingError } = await supabase
+        .from('system_settings')
+        .select('*')
+        .maybeSingle();
 
-    if (!settingError && settings && settings.otp_enabled !== false) {
-      const nodemailer = require('nodemailer');
-      let transporter = nodemailer.createTransport({
-        host: 'smtp.resend.com',
-        port: 587,
-        secure: false,
-        auth: { user: 'resend', pass: process.env.RESEND_API_KEY }
-      });
+      if (!settingError && settings && settings.otp_enabled !== false) {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.resend.com',
+          port: 587,
+          secure: false,
+          auth: { user: 'resend', pass: process.env.RESEND_API_KEY }
+        });
 
-      await transporter.sendMail({
-        from: 'onboarding@resend.dev',
-        to: email,
-        subject: 'Your OTP Code for Innovators Arena 2.0',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #7c3aed;">Your OTP Code</h2>
-            <p>Your OTP code is: <strong style="font-size: 24px; color: #7c3aed;">${otp}</strong></p>
-            <p>This code will expire in 10 minutes.</p>
-            <p>If you didn't request this, please ignore this email.</p>
-          </div>
-        `
-      });
+        await transporter.sendMail({
+          from: 'onboarding@resend.dev',
+          to: email,
+          subject: 'Your OTP Code for Innovators Arena 2.0',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #7c3aed;">Your OTP Code</h2>
+              <p>Your OTP code is: <strong style="font-size: 24px; color: #7c3aed;">${otp}</strong></p>
+              <p>This code will expire in 10 minutes.</p>
+              <p>If you didn't request this, please ignore this email.</p>
+            </div>
+          `
+        });
+      }
     }
 
-    res.status(200).json({ success: true, message: 'OTP sent successfully' });
+    res.status(200).json({
+      success: true,
+      message: 'OTP generated successfully',
+      // No SMS/email gateway is configured, so the OTP is returned for on-screen display.
+      otp
+    });
   } catch (error) {
     console.error('Send OTP error:', error);
     res.status(500).json({ success: false, message: error.message || 'Server error' });
@@ -282,24 +297,31 @@ exports.sendOTP = async (req, res) => {
 
 exports.resetPassword = async (req, res) => {
   try {
-    const { email, otp, newPassword } = req.body;
+    const { email, phone, otp, newPassword } = req.body;
 
-    if (!email || !otp || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required' });
+    if ((!email && !phone) || !otp || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Mobile number, OTP, and new password are required' });
     }
+
+    const column = phone ? 'phone' : 'email';
+    const value = phone ? String(phone).trim() : email;
 
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email)
-      .single();
+      .eq(column, value)
+      .maybeSingle();
 
     if (userError || !user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (user.otp !== otp) {
+    if (!user.otp || user.otp !== otp) {
       return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+
+    if (user.otp_expires_at && new Date(user.otp_expires_at).getTime() < Date.now()) {
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
     }
 
     if (newPassword.length < 6) {
@@ -311,7 +333,7 @@ exports.resetPassword = async (req, res) => {
     await supabase
       .from('users')
       .update({ password: hashedPassword, otp: null, otp_expires_at: null })
-      .eq('email', email);
+      .eq('id', user.id);
 
     res.status(200).json({ success: true, message: 'Password reset successfully' });
   } catch (error) {

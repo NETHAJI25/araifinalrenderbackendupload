@@ -142,12 +142,35 @@ export const authService = {
     }
   },
 
-  async sendOTP(_phone: string): Promise<void> {
-    await new Promise((r) => setTimeout(r, 500));
+  async sendOTP(phone: string): Promise<string> {
+    if (MOCK_MODE) {
+      await new Promise((r) => setTimeout(r, 500));
+      return "123456";
+    }
+
+    const res = await fetch(`${API_URL}/api/auth/send-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to send OTP");
+    return data.otp as string;
   },
 
-  async resetPassword(_email: string): Promise<void> {
-    await new Promise((r) => setTimeout(r, 500));
+  async resetPassword(phone: string, otp: string, newPassword: string): Promise<void> {
+    if (MOCK_MODE) {
+      await new Promise((r) => setTimeout(r, 500));
+      return;
+    }
+
+    const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, otp, newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to reset password");
   },
 
   updateCurrentUser(updates: Partial<User>): User | null {
