@@ -87,7 +87,11 @@ export const authService = {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    const user = { ...data.data.user, token: data.data.token };
+    const user: User = {
+      ...data.data.user,
+      token: data.data.token,
+      role: getUserRole(data.data.user.email),
+    };
     saveSession(user);
     return user;
   },
@@ -120,9 +124,13 @@ export const authService = {
 
     const data = await fetchWithAuth("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify(userData),
+      body: JSON.stringify({ ...userData, acceptTerms: true }),
     });
-    const user = { ...data.data.user, token: data.data.token };
+    const user: User = {
+      ...data.data.user,
+      token: data.data.token,
+      role: "participant",
+    };
     saveSession(user);
     return user;
   },

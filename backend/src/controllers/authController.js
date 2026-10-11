@@ -2,13 +2,14 @@ const { v4: uuidv4 } = require('uuid');
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-function generateToken(userId) {
-  const payload = { userId };
+function generateToken(userId, role) {
+  const payload = { userId, role };
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   return token;
 }
@@ -60,16 +61,14 @@ exports.register = async (req, res) => {
         password: hashedPassword,
         role: 'team_leader',
         payment_status: 'unpaid',
-        profile_completed: false,
-        created_at: now,
-        updated_at: now
+        profile_completed: false
       })
       .select()
       .single();
 
     if (insertError) throw new Error(insertError.message);
 
-    const token = generateToken(userId);
+    const token = generateToken(userId, 'team_leader');
 
     res.status(201).json({
       success: true,
@@ -116,7 +115,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    const token = generateToken(user.id);
+    const token = generateToken(user.id, user.role);
 
     res.status(200).json({
       success: true,
@@ -186,7 +185,7 @@ exports.updateProfile = async (req, res) => {
     const userId = req.user.userId;
     const { name, phone, college, profileCompleted } = req.body;
 
-    const updateData = { updated_at: new Date().toISOString() };
+    const updateData = {};
     if (name) updateData.name = name;
     if (phone) updateData.phone = phone;
     if (college) updateData.college = college;
