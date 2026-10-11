@@ -21,17 +21,22 @@ export default function SubmissionPage() {
 
   const isLeader = team?.leaderId === user.id;
   const memberCount = team?.members.length ?? 0;
-  const allPaid = (team?.members ?? []).every((m) => m.paymentStatus === "paid" || m.paymentStatus === "verified");
+  const isRound2 = team?.round === 2;
+  const round2Fee = eventConfig.registrationFee; // 200
+  
+  // Round 2: All members must pay ₹200
+  const allPaidRound2 = isRound2 && (team?.members ?? []).every((m) => m.paymentStatus === "paid" || m.paymentStatus === "verified");
   const paidCount = (team?.members ?? []).filter((m) => m.paymentStatus === "paid" || m.paymentStatus === "verified").length;
   const isConfirmed = team?.confirmationStatus === "confirmed";
 
-  // Eligibility = team exists + 2–6 members + all paid + leader confirmed
-  const isEligible = !!team && memberCount >= eventConfig.teamMin && memberCount <= eventConfig.teamMax && allPaid && isConfirmed;
+  // Eligibility = Round 2 + team exists + 4–6 members + all paid (₹200) + leader confirmed
+  const isEligible = !!team && isRound2 && memberCount >= eventConfig.teamMin && memberCount <= eventConfig.teamMax && allPaidRound2 && isConfirmed;
 
   const checks = [
     { check: !!team, label: "Team created", detail: team ? team.teamName : "No team found" },
     { check: memberCount >= eventConfig.teamMin, label: `Minimum ${eventConfig.teamMin} members`, detail: `${memberCount} member(s)` },
-    { check: allPaid, label: "All members have paid", detail: `${paidCount} / ${memberCount} paid` },
+    { check: isRound2, label: "Round 1 Qualified", detail: isRound2 ? "Selected for Finals" : "Pending Round 1 results" },
+    { check: allPaidRound2, label: `All members paid ₹${round2Fee}`, detail: `${paidCount} / ${memberCount} paid` },
     { check: isConfirmed, label: "Team confirmed by leader", detail: isConfirmed ? "Confirmed" : "Pending confirmation" },
   ];
 
@@ -154,7 +159,7 @@ export default function SubmissionPage() {
                   <div>
                     <p className="text-sm font-bold text-gray-700">Submission Access Locked</p>
                     <p className="text-sm text-gray-500 mt-1">
-                      Complete your team, ensure all members have paid ₹{eventConfig.registrationFee}, and wait for the Team Leader to confirm the team.
+                      Complete your team and wait for the Team Leader to confirm the team.
                     </p>
                   </div>
                 </div>
@@ -165,10 +170,16 @@ export default function SubmissionPage() {
                     </Button>
                   </Link>
                 )}
-                {team && !allPaid && (
+                {team && !isRound2 && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-4">
+                    <p className="text-sm font-semibold text-amber-800 mb-1">Round 1: PPT Submitted</p>
+                    <p className="text-sm text-amber-700">Waiting for Round 1 evaluation results. If selected, team will advance to Round 2 (Finals) where all members pay ₹200 each.</p>
+                  </div>
+                )}
+                {team && isRound2 && !allPaidRound2 && (
                   <Link to="/dashboard/team">
                     <Button variant="secondary" size="md" leftIcon={<CreditCard className="w-4 h-4" />}>
-                      Complete Payment
+                      Complete Payment (₹{round2Fee} each)
                     </Button>
                   </Link>
                 )}

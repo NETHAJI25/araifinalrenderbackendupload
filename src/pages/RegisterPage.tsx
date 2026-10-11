@@ -1,13 +1,37 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import { Input, Select } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { IALogoMark } from "../components/ui/IALogo";
 import { eventConfig } from "../config/eventConfig";
+
+const TERMS_POINTS = [
+  "Only current students (UG/PG/Diploma) are eligible to participate.",
+  "Teams must have 4–6 members. Solo participation is not allowed.",
+  "Round 1: Team Leader pays ₹100 and submits the PPT for evaluation.",
+  "Only teams selected in Round 1 advance to Round 2 (Finals).",
+  "Round 2: Each member pays ₹200 individually before the final submission.",
+  "All submissions must be original work. Plagiarism leads to disqualification.",
+  "Use the official PPT template for all submissions.",
+  "Judges' decisions are final and binding.",
+  "Registration fees are non-refundable except in case of event cancellation.",
+  "Participants must follow the Code of Conduct. Misconduct leads to removal.",
+  "Organizers may use project demos/photos for promotional purposes.",
+  "Cash prize of ₹1,00,000 will be distributed among winning teams as announced.",
+];
+
+const CONDUCT_POINTS = [
+  "Treat all participants, mentors, judges and organizers with respect.",
+  "No harassment, discrimination or abusive behaviour of any kind.",
+  "No cheating, sabotage or attempting to gain unfair advantage.",
+  "Keep the venue and online spaces clean and professional.",
+  "Follow all safety instructions during the offline final round.",
+  "Report any violations to the organizing team immediately.",
+];
 
 const steps = ["Account", "Personal", "Academic", "Confirm"];
 
@@ -44,6 +68,7 @@ export default function RegisterPage() {
   const [showPw, setShowPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [legalModal, setLegalModal] = useState<"terms" | "conduct" | null>(null);
 
   const { register, handleSubmit, trigger, watch, setValue, getValues, formState: { errors } } =
     useForm<FormData>({ defaultValues: { country: "India", agreed: false } });
@@ -174,7 +199,7 @@ export default function RegisterPage() {
                     <input type="checkbox" checked={agreedValue} onChange={(e) => setValue("agreed", e.target.checked)}
                       className="w-4 h-4 mt-0.5 text-violet-600 rounded border-gray-300 focus:ring-violet-500 shrink-0" />
                     <span className="text-sm text-gray-600">
-                      I agree to the <a href={eventConfig.legalLinks.termsConditions} className="text-violet-700 hover:underline font-medium">Terms & Conditions</a> and <a href={eventConfig.legalLinks.codeOfConduct} className="text-violet-700 hover:underline font-medium">Code of Conduct</a>.
+                      I agree to the <button type="button" onClick={(e) => { e.preventDefault(); setLegalModal("terms"); }} className="text-violet-700 hover:underline font-medium">Terms & Conditions</button> and <button type="button" onClick={(e) => { e.preventDefault(); setLegalModal("conduct"); }} className="text-violet-700 hover:underline font-medium">Code of Conduct</button>.
                     </span>
                   </label>
                   {errors.agreed && <p className="text-sm text-red-600" role="alert">{errors.agreed.message}</p>}
@@ -198,6 +223,38 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Terms / Code of Conduct Modal */}
+      {legalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" onClick={() => setLegalModal(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h3 className="text-lg font-black text-gray-900">
+                {legalModal === "terms" ? "Terms & Conditions" : "Code of Conduct"}
+              </h3>
+              <button onClick={() => setLegalModal(null)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Close">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto">
+              <ol className="space-y-3">
+                {(legalModal === "terms" ? TERMS_POINTS : CONDUCT_POINTS).map((point, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
+                    <span className="w-6 h-6 bg-violet-100 text-violet-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
+                    <span className="leading-relaxed">{point}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <div className="p-4 border-t border-gray-100">
+              <Button variant="primary" size="md" className="w-full" onClick={() => { setValue("agreed", true); setLegalModal(null); }}>
+                I Understand & Agree
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

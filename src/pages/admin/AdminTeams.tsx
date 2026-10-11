@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, Ban, Mail, Eye } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { teamService } from "../../services/teamService";
 import { submissionService } from "../../services/submissionService";
 import type { Team, Submission } from "../../types";
@@ -11,6 +11,7 @@ export default function AdminTeams() {
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
@@ -117,9 +118,9 @@ export default function AdminTeams() {
                 filteredTeams.map((team) => {
                   const hasSubmitted = submissions.some(s => s.teamId === team.teamId);
                   return (
-                    <tr key={team.id} className="hover:bg-gray-50/50">
+                    <tr key={team.id} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => navigate(`/admin/teams/${team.teamId}`)}>
                       <td className="px-5 py-4">
-                        <p className="font-bold text-gray-900">{team.teamName}</p>
+                        <p className="font-bold text-violet-700 hover:underline">{team.teamName}</p>
                         <p className="text-xs text-gray-500 font-mono mt-0.5">{team.teamId}</p>
                       </td>
                       <td className="px-5 py-4">
@@ -164,7 +165,7 @@ export default function AdminTeams() {
                             {hasSubmitted ? "Submitted" : "Pending"}
                           </span>
                       </td>
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             to={`/admin/teams/${team.teamId}`}
@@ -173,7 +174,7 @@ export default function AdminTeams() {
                           >
                             <Eye className="w-4 h-4" />
                           </Link>
-                          <button 
+                          <button
                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Contact Team Leader"
                             onClick={() => alert(`Emailing leader... (Mock)`)}
@@ -181,7 +182,7 @@ export default function AdminTeams() {
                             <Mail className="w-4 h-4" />
                           </button>
                           {team.status !== 'rejected' && (
-                            <button 
+                            <button
                               className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Reject Team"
                               onClick={() => handleReject(team.teamId)}

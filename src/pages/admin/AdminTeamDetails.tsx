@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Users, ShieldAlert, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Users, ShieldAlert, CheckCircle, XCircle, ArrowUpRight } from "lucide-react";
 import { teamService } from "../../services/teamService";
 import { submissionService } from "../../services/submissionService";
 import { mockUsers } from "../../data/mockUsers";
@@ -19,6 +19,26 @@ export default function AdminTeamDetails() {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
+  const [promoting, setPromoting] = useState(false);
+
+  // Check if team is in Round 1 and ready for promotion
+  const isRound1 = team?.round === 1 || team?.round === undefined;
+  const leaderPaid = team?.leaderId && team.members.find(m => m.userId === team.leaderId)?.paymentStatus === "paid";
+  const canPromote = isRound1 && leaderPaid && team?.confirmationStatus !== "confirmed";
+
+  const handlePromote = async () => {
+    if (!teamId || !canPromote) return;
+    setPromoting(true);
+    try {
+      const updatedTeam = await teamService.updateTeamRound(teamId, 2);
+      setTeam(updatedTeam);
+      addToast({ type: "success", title: "Team promoted to Round 2!", message: "All members will now need to pay ₹200 each." });
+    } catch (err: any) {
+      addToast({ type: "error", title: err.message || "Failed to promote team" });
+    } finally {
+      setPromoting(false);
+    }
+  };
 
   useEffect(() => {
     async function loadTeam() {
@@ -81,6 +101,11 @@ export default function AdminTeamDetails() {
             Reject Team
           </Button>
         )}
+        {canPromote && (
+          <Button variant="primary" className="bg-green-600 hover:bg-green-700" onClick={handlePromote} loading={promoting} leftIcon={<ArrowUpRight className="w-4 h-4" />}>
+            Promote to Round 2
+          </Button>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -99,7 +124,6 @@ export default function AdminTeamDetails() {
                       <p className="font-bold text-gray-900">{m.name} <span className="text-xs font-normal text-gray-500 ml-2">{userExt?.email || 'N/A'}</span></p>
                       <p className="text-sm text-gray-600 mt-1">{m.college}</p>
                       <p className="text-xs text-gray-500">{userExt?.course || 'Course N/A'}, {userExt?.year || 'Year N/A'}</p>
-                      <p className="text-xs text-gray-500">📞 {userExt?.phone || 'N/A'}</p>
                     </div>
                     <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2">
                       <span className={`text-xs font-semibold px-2 py-1 rounded-md ${m.role === 'Team Leader' ? 'bg-violet-100 text-violet-700' : 'bg-gray-200 text-gray-700'}`}>{m.role}</span>

@@ -107,11 +107,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-              <p className="text-xs text-blue-700 font-medium text-center">
-                Demo mode: enter any email and password to sign in
-              </p>
-            </div>
+            
 
             <p className="text-center text-sm text-gray-500 mt-6">
               Don't have an account?{" "}

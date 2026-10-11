@@ -80,7 +80,6 @@ export const mockTeamIncomplete: Team = {
   ],
   status: "active",
   confirmationStatus: "pending",
-  round: 1,
   createdAt: new Date("2026-09-01").toISOString(),
   updatedAt: new Date("2026-09-01").toISOString(),
 };
@@ -123,7 +122,6 @@ export const mockTeamComplete: Team = {
   ],
   status: "active",
   confirmationStatus: "pending",
-  round: 1,
   createdAt: new Date("2026-09-01").toISOString(),
   updatedAt: new Date("2026-09-03").toISOString(),
 };
@@ -138,5 +136,4 @@ export const mockTeamConfirmed: Team = {
     paymentStatus: "paid" as const,
   })),
   confirmationStatus: "confirmed",
-  round: 2,
 };

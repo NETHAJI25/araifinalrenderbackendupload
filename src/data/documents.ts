@@ -13,8 +13,8 @@ export const documents: DocumentItem[] = [
     title: "PPT Format Template",
     description:
       "Official presentation template for final project submission. All teams must use this format.",
-    type: "PPTX / PDF",
-    path: "/assets/documents/ppt-format.pdf",
+    type: "Google Slides / PPTX",
+    path: "https://docs.google.com/presentation/d/1bTUtL_KCMQgRB9ilwnmL-PntFyXofzd4/edit?usp=sharing&ouid=110748840767488667268&rtpof=true&sd=true",
     category: "Submission",
   },
   {
@@ -23,7 +23,7 @@ export const documents: DocumentItem[] = [
     description:
       "Complete guidelines covering rules, regulations, evaluation criteria, and participant responsibilities.",
     type: "PDF",
-    path: "/assets/documents/guidelines.pdf",
+    path: "https://drive.google.com/file/d/1yovAvdekpyUmSp3nDYbx73_1XgvzzfyK/view?usp=sharing",
     category: "Rules",
   },
 ];

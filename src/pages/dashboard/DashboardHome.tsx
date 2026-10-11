@@ -7,6 +7,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { profileCompletionPercent, paymentStatusLabel } from "../../utils/formatters";
 import { eventConfig } from "../../config/eventConfig";
+import { teamService } from "../../services/teamService";
 
 // Progress step — order: Account → Profile → Team → Complete Team → Payment → Confirm → Submit
 function StepItem({ num, label, status }: {
@@ -31,10 +32,8 @@ export default function DashboardHome() {
 
   useEffect(() => {
     refreshUser();
-    import("../../services/teamService").then(({ teamService }) => {
-      teamService.getMyTeam().then(t => setTeam(t));
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    teamService.getMyTeam().then(t => setTeam(t));
+  }, [refreshUser]);
 
   if (!user) return null;
 
@@ -43,19 +42,46 @@ export default function DashboardHome() {
   const isPaid = user.paymentStatus === "paid" || user.paymentStatus === "verified";
   const hasTeam = !!user.teamId;
   const teamComplete = team?.status === "complete" || team?.confirmationStatus === "confirmed";
+  
+  // Round-based logic
+  const isRound1 = team?.round === 1 || team?.round === undefined;
+  const isRound2 = team?.round === 2;
+  const round1Fee = 100;
+  const round2Fee = eventConfig.registrationFee; // 200
+  const leaderPaidRound1 = team?.leaderId === user.id && isPaid && isRound1;
+  const allPaidRound2 = isRound2 && (team?.members?.every((m: any) => m.paymentStatus === "paid" || m.paymentStatus === "verified") ?? false);
 
-  // NEW ORDER: 1 Account, 2 Profile, 3 Create/Join Team, 4 Complete Team, 5 Payment, 6 Confirm, 7 Submit
+  // Payment display logic
+  const getPaymentDisplay = () => {
+    if (!hasTeam) return { value: "₹200", sub: "Join a team first", color: "text-gray-500 bg-gray-50" };
+    if (isRound1) {
+      if (team?.leaderId === user.id) {
+        return leaderPaidRound1 
+          ? { value: "Round 1 Paid", sub: "₹100 ✓ Awaiting results", color: "text-green-600 bg-green-50" }
+          : { value: `₹${round1Fee}`, sub: "Round 1: Leader pays", color: "text-amber-600 bg-amber-50" };
+      }
+      return { value: `₹${round1Fee}`, sub: "Leader submits PPT", color: "text-blue-600 bg-blue-50" };
+    }
+    if (isRound2) {
+      return isPaid
+        ? { value: "Round 2 Paid", sub: `₹${round2Fee} ✓`, color: "text-green-600 bg-green-50" }
+        : { value: `₹${round2Fee}`, sub: "Round 2: All members pay", color: "text-amber-600 bg-amber-50" };
+    }
+    return { value: `₹${eventConfig.registrationFee}`, sub: paymentStatusLabel(user.paymentStatus).label, color: isPaid ? "text-green-600 bg-green-50" : "text-amber-600 bg-amber-50" };
+  };
+
+  const payDisplay = getPaymentDisplay();
+
+  // Progress steps (Round-aware)
   const steps: { label: string; status: "completed" | "current" | "locked" }[] = [
     { label: "Create Account", status: "completed" },
     { label: "Complete Profile", status: profileDone ? "completed" : "current" },
     { label: "Create / Join Team", status: !profileDone ? "locked" : hasTeam ? "completed" : "current" },
     { label: "Complete Team", status: !hasTeam ? "locked" : teamComplete ? "completed" : "current" },
-    { label: "Complete Payment", status: !teamComplete ? "locked" : isPaid ? "completed" : "current" },
-    { label: "Confirm Team", status: !isPaid ? "locked" : "current" },
-    { label: "Submit Project", status: "locked" },
+    { label: isRound1 ? "Round 1: Leader PPT (₹100)" : "Round 2: Payment (₹200 each)", status: !teamComplete ? "locked" : isRound1 ? (leaderPaidRound1 ? "completed" : "current") : (isPaid ? "completed" : "current") },
+    { label: isRound1 ? "Round 1 Results" : "Confirm Team", status: isRound1 ? "locked" : !isPaid ? "locked" : (team?.confirmationStatus === "confirmed" ? "completed" : "current") },
+    { label: "Submit Project", status: isRound1 ? "locked" : (team?.confirmationStatus === "confirmed" && allPaidRound2 ? "current" : "locked") },
   ];
-
-  const payStatus = paymentStatusLabel(user.paymentStatus);
 
   return (
     <>
@@ -74,8 +100,8 @@ export default function DashboardHome() {
         {[
           { label: "Profile", icon: <CheckCircle className="w-5 h-5" />, value: `${profilePct}%`, sub: "Complete", color: profileDone ? "text-green-600 bg-green-50" : "text-amber-600 bg-amber-50", href: "/dashboard/profile" },
           { label: "Team", icon: <Users className="w-5 h-5" />, value: hasTeam ? user.teamId! : "No Team", sub: hasTeam ? "Joined" : "Not joined", color: hasTeam ? "text-violet-700 bg-violet-50" : "text-gray-500 bg-gray-50", href: "/dashboard/team", mono: hasTeam },
-          { label: "Payment", icon: <CreditCard className="w-5 h-5" />, value: isPaid ? "Paid" : `₹${eventConfig.registrationFee}`, sub: payStatus.label, color: isPaid ? "text-green-600 bg-green-50" : "text-amber-600 bg-amber-50", href: "/dashboard/team" },
-          { label: "Submission", icon: <Send className="w-5 h-5" />, value: "Locked", sub: "Complete steps first", color: "text-gray-500 bg-gray-50", href: "/dashboard/submission" },
+          { label: "Payment", icon: <CreditCard className="w-5 h-5" />, value: payDisplay.value, sub: payDisplay.sub, color: payDisplay.color, href: "/dashboard/team" },
+          { label: "Submission", icon: <Send className="w-5 h-5" />, value: isRound1 ? "Round 1" : (team?.confirmationStatus === "confirmed" && allPaidRound2 ? "Ready" : "Locked"), sub: isRound1 ? "Submit PPT first" : (team?.confirmationStatus === "confirmed" && allPaidRound2 ? "Open form" : "Complete steps first"), color: isRound1 ? "text-blue-600 bg-blue-50" : (team?.confirmationStatus === "confirmed" && allPaidRound2 ? "text-green-600 bg-green-50" : "text-gray-500 bg-gray-50"), href: "/dashboard/submission" },
         ].map((card) => (
           <Link key={card.label} to={card.href}
             className="card p-4 hover:border-violet-200 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-violet-400">
@@ -105,15 +131,48 @@ export default function DashboardHome() {
             </div>
           )}
 
-          {/* Payment note — only show after team complete */}
-          {teamComplete && !isPaid && (
+          {/* Payment note — round-aware */}
+          {teamComplete && (
             <div className="card p-5 border-amber-200 bg-amber-50 flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-bold text-amber-900">Complete Your Payment</p>
-                <p className="text-xs text-amber-700 mt-0.5">Pay ₹{eventConfig.registrationFee} to unlock team confirmation and submission.</p>
-                <Link to="/dashboard/team" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline">
-                  Go to My Team <ChevronRight className="w-3 h-3" />
-                </Link>
+                {isRound1 ? (
+                  team?.leaderId === user.id ? (
+                    leaderPaidRound1 ? (
+                      <>
+                        <p className="text-sm font-bold text-green-800">Round 1 PPT Submitted ✓</p>
+                        <p className="text-xs text-green-700 mt-0.5">Awaiting evaluation results. Team will advance to Round 2 if selected.</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-bold text-amber-900">Round 1: Submit PPT</p>
+                        <p className="text-xs text-amber-700 mt-0.5">Team Leader pays ₹{round1Fee} and submits PPT for evaluation.</p>
+                        <Link to="/dashboard/team" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline">
+                          Go to My Team <ChevronRight className="w-3 h-3" />
+                        </Link>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold text-blue-800">Round 1: Waiting for Leader</p>
+                      <p className="text-xs text-blue-700 mt-0.5">Team Leader will pay ₹{round1Fee} and submit PPT for evaluation.</p>
+                    </>
+                  )
+                ) : (
+                  isPaid ? (
+                    <>
+                      <p className="text-sm font-bold text-green-800">Round 2 Payment Complete ✓</p>
+                      <p className="text-xs text-green-700 mt-0.5">All members paid ₹{round2Fee}. Ready for team confirmation.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold text-amber-900">Round 2: Complete Payment</p>
+                      <p className="text-xs text-amber-700 mt-0.5">Pay ₹{round2Fee} to unlock team confirmation and submission.</p>
+                      <Link to="/dashboard/team" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:underline">
+                        Go to My Team <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    </>
+                  )
+                )}
               </div>
               <CreditCard className="w-5 h-5 text-amber-500 shrink-0" />
             </div>

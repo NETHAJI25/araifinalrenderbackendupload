@@ -1,8 +1,25 @@
 import type { Announcement } from "../types";
+import { authService } from "./authService";
 
-const STORAGE_KEY = "ia_announcements";
+const MOCK_MODE = false;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// Initial mock announcements for demo purposes
+async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  const token = authService.getToken();
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Request failed");
+  return data;
+}
+
+// Initial mock announcements for demo purposes (fallback only)
 const defaultAnnouncements: Announcement[] = [
   {
     id: "a1",
@@ -26,17 +43,29 @@ const defaultAnnouncements: Announcement[] = [
 
 export const announcementService = {
   getAll: async (): Promise<Announcement[]> => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
+    if (MOCK_MODE) {
+      try {
+        const STORAGE_KEY = "ia_announcements";
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) return JSON.parse(stored);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultAnnouncements));
+        return defaultAnnouncements;
+      } catch {
+        return [];
       }
-      // Initialize if empty
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultAnnouncements));
+    }
+
+    try {
+      const data = await apiFetch("/api/announcements");
+      // Backend returns { success: true, data: announcementsArray }
+      return data.data || [];
+    } catch {
+      // Fallback to localStorage if API fails
+      try {
+        const stored = localStorage.getItem("ia_announcements");
+        if (stored) return JSON.parse(stored);
+      } catch {}
       return defaultAnnouncements;
-    } catch (error) {
-      console.error("Failed to fetch announcements:", error);
-      return [];
     }
   },
 
@@ -48,35 +77,53 @@ export const announcementService = {
   },
 
   create: async (announcement: Omit<Announcement, "id" | "createdAt" | "updatedAt">): Promise<Announcement> => {
-    const all = await announcementService.getAll();
-    const newAnnouncement: Announcement = {
-      ...announcement,
-      id: `a${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([newAnnouncement, ...all]));
-    return newAnnouncement;
+    if (MOCK_MODE) {
+      const all = await announcementService.getAll();
+      const newAnnouncement: Announcement = {
+        ...announcement,
+        id: `a${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem("ia_announcements", JSON.stringify([newAnnouncement, ...all]));
+      return newAnnouncement;
+    }
+
+    const data = await apiFetch("/api/announcements", {
+      method: "POST",
+      body: JSON.stringify(announcement),
+    });
+    return data.data;
   },
 
   update: async (id: string, updates: Partial<Announcement>): Promise<Announcement> => {
-    const all = await announcementService.getAll();
-    const index = all.findIndex((a) => a.id === id);
-    if (index === -1) throw new Error("Announcement not found");
+    if (MOCK_MODE) {
+      const all = await announcementService.getAll();
+      const index = all.findIndex((a) => a.id === id);
+      if (index === -1) throw new Error("Announcement not found");
+      const updated = { ...all[index], ...updates, updatedAt: new Date().toISOString() };
+      all[index] = updated;
+      localStorage.setItem("ia_announcements", JSON.stringify(all));
+      return updated;
+    }
 
-    const updated = {
-      ...all[index],
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-    all[index] = updated;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-    return updated;
+    const data = await apiFetch(`/api/announcements/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    });
+    return data.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    const all = await announcementService.getAll();
-    const filtered = all.filter((a) => a.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    if (MOCK_MODE) {
+      const all = await announcementService.getAll();
+      const filtered = all.filter((a) => a.id !== id);
+      localStorage.setItem("ia_announcements", JSON.stringify(filtered));
+      return;
+    }
+
+    await apiFetch(`/api/announcements/${id}`, {
+      method: "DELETE",
+    });
   },
 };
