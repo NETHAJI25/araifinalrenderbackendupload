@@ -96,7 +96,7 @@ exports.createTeam = async (req, res) => {
 
     const teamId = generateTeamId();
     const newTeam = {
-      id: `team_${uuidv4()}`,
+      id: uuidv4(),
       team_id: teamId,
       team_name: teamName,
       leader_id: userId,
