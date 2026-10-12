@@ -7,7 +7,9 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { teamService } from "../../services/teamService";
-import { paymentService } from "../../services/paymentService";
+import { paymentService as cashfreeApi } from "../../services/cashfreeService";
+import { authService } from "../../services/authService";
+import { CashfreePaymentModal } from "../../components/payment/CashfreePaymentModal";
 import { problemStatements } from "../../data/problemStatements";
 import { Modal, ConfirmDialog } from "../../components/ui/Modal";
 import { Input, Select } from "../../components/ui/Input";
@@ -36,6 +38,7 @@ export default function TeamPage() {
   const [joinId, setJoinId] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<{ orderId: string; paymentSessionId: string; amount: number } | null>(null);
   const [copied, setCopied] = useState(false);
   const [formError, setFormError] = useState("");
   const [joinError, setJoinError] = useState("");
@@ -74,6 +77,27 @@ export default function TeamPage() {
     load();
   }, [user]);
 
+  // Handle the redirect back from the Cashfree checkout page.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") !== "success") return;
+    const orderId = params.get("order_id");
+    (async () => {
+      try {
+        if (orderId) await cashfreeApi.verifyPayment(orderId);
+      } catch { /* verification/webhook will settle the status */ }
+      authService.updateCurrentUser({ paymentStatus: "paid" });
+      refreshUser();
+      addToast({ type: "success", title: "Payment successful!", message: "Your payment has been confirmed." });
+      window.history.replaceState({}, "", window.location.pathname);
+      try {
+        const t = await teamService.getMyTeam();
+        setTeam(t);
+      } catch { /* ignore */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleCreateTeam() {
     setFormError("");
     if (!teamName.trim()) { setFormError("Team name is required"); return; }
@@ -107,27 +131,44 @@ export default function TeamPage() {
   }
 
   async function handlePayment() {
+    if (!user) return;
+    const fee = isRound1 ? round1Fee : round2Fee;
+    const round = isRound1 ? 1 : 2;
     setPayLoading(true);
     try {
-      await paymentService.mockCompletePay();
-      refreshUser();
-      // Update member status in local team state
-      if (team && user) {
-        const updated = { ...team };
-        const memberIdx = updated.members.findIndex((m) => m.userId === user.id);
-        if (memberIdx >= 0) updated.members[memberIdx].paymentStatus = "paid";
-        
-        // If round 1 leader payment, update team round to 2
-        if (isLeader && isRound1) {
-          updated.round = 2;
-        }
-        setTeam(updated);
-      }
-      const fee = isRound1 ? round1Fee : round2Fee;
-      addToast({ type: "success", title: "Payment successful!", message: `₹${fee} registration fee paid.` });
+      const order = await cashfreeApi.createPaymentOrder(fee, round);
+      setPendingOrder({
+        orderId: order.orderId,
+        paymentSessionId: order.paymentSessionId,
+        amount: order.amount ?? fee,
+      });
     } catch (e: unknown) {
       addToast({ type: "error", title: "Payment failed", message: e instanceof Error ? e.message : "Try again." });
-    } finally { setPayLoading(false); }
+    } finally {
+      setPayLoading(false);
+    }
+  }
+
+  function handlePaymentSuccess() {
+    const fee = pendingOrder?.amount ?? (isRound1 ? round1Fee : round2Fee);
+    addToast({ type: "success", title: "Payment successful!", message: `₹${fee} registration fee paid.` });
+    setPendingOrder(null);
+    // Reflect the new status everywhere immediately (backend already synced by verify/webhook).
+    authService.updateCurrentUser({ paymentStatus: "paid" });
+    refreshUser();
+    if (team && user) {
+      const updated = { ...team };
+      const memberIdx = updated.members.findIndex((m) => m.userId === user.id);
+      if (memberIdx >= 0) updated.members[memberIdx].paymentStatus = "paid";
+      // Round 1 leader payment advances the team view to Round 2.
+      if (isLeader && isRound1) updated.round = 2;
+      setTeam(updated);
+    }
+  }
+
+  function handlePaymentError(message: string) {
+    setPendingOrder(null);
+    addToast({ type: "error", title: "Payment failed", message });
   }
 
   async function handleCompleteTeam() {
@@ -427,7 +468,7 @@ export default function TeamPage() {
               )}
 
               <p className="text-xs text-gray-400">
-                Note: This is a frontend mock. No real transaction occurs.
+                Payments are processed securely via Cashfree.
               </p>
             </div>
           )}
@@ -531,6 +572,22 @@ export default function TeamPage() {
         message="Once confirmed, your team is finalized and submission will be unlocked for the Team Leader. Are you ready?"
         confirmLabel="Confirm Team" loading={actionLoading}
       />
+
+      {/* Cashfree Payment Modal */}
+      {pendingOrder && user && (
+        <CashfreePaymentModal
+          isOpen={!!pendingOrder}
+          onClose={() => setPendingOrder(null)}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+          amount={pendingOrder.amount}
+          orderId={pendingOrder.orderId}
+          paymentSessionId={pendingOrder.paymentSessionId}
+          customerName={user.name}
+          customerEmail={user.email}
+          customerPhone={user.phone}
+        />
+      )}
     </>
   );
 }

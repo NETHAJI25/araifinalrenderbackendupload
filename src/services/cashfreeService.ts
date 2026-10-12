@@ -4,13 +4,13 @@ import { authService } from "./authService";
 const API_URL = import.meta.env.VITE_API_URL || "https://araifinalrenderbackendupload.onrender.com";
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const user = authService.getCurrentUser();
+  const token = authService.getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (user?.token) {
-    headers["Authorization"] = `Bearer ${user.token}`;
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_URL}${url}`, {

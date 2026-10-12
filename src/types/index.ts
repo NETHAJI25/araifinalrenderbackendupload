@@ -56,6 +56,11 @@ export interface Payment {
   reference: string | null;
   createdAt: string;
   updatedAt: string;
+  orderId?: string;
+  cfOrderId?: string | null;
+  cfPaymentId?: string | null;
+  paymentSessionId?: string | null;
+  round?: number;
 }
 
 // ─── Submission ───────────────────────────────────────────────────────────────
