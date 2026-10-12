@@ -18,19 +18,15 @@ const contactRoutes = require('./src/routes/contactRoutes');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Reflect any request origin. This API is protected by JWT bearer tokens
+// (not cookies), so allowing all origins is safe and avoids "Failed to fetch"
+// when the frontend is served from a different domain (apex vs www, Vercel
+// preview URLs, etc.).
 app.use(cors({
-  origin: process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',')
-    : [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:5175',
-        'http://localhost:5176',
-        'https://innovators-arena.vercel.app',
-        'https://araifinalrenderbackendupload.vercel.app',
-      ],
+  origin: true,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(helmet());

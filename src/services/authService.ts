@@ -40,6 +40,25 @@ async function parseBody(res: Response): Promise<{ message?: string; data?: unkn
   }
 }
 
+// Retry transient network failures (e.g. Render free-tier cold starts or a
+// momentary connection drop), then throw a clear message.
+async function fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      if (attempt === retries) {
+        throw new Error(
+          "Couldn't reach the server. Please check your connection and try again in a moment."
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+    }
+  }
+  // Unreachable, but satisfies the type checker.
+  throw new Error("Request failed");
+}
+
 export const authService = {
   async login(email: string, password: string): Promise<User> {
     if (MOCK_MODE) {
@@ -81,7 +100,7 @@ export const authService = {
       return found;
     }
 
-    const res = await fetch(`${API_URL}/api/auth/login`, {
+    const res = await fetchWithRetry(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -119,7 +138,7 @@ export const authService = {
       return newUser;
     }
 
-    const res = await fetch(`${API_URL}/api/auth/register`, {
+    const res = await fetchWithRetry(`${API_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...data, acceptTerms: true }),
@@ -160,14 +179,14 @@ export const authService = {
       return "123456";
     }
 
-    const res = await fetch(`${API_URL}/api/auth/send-otp`, {
+    const res = await fetchWithRetry(`${API_URL}/api/auth/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to send OTP");
-    return data.otp as string;
+    const data = await parseBody(res);
+    if (!res.ok) throw new Error(data?.message || "Failed to send OTP");
+    return (data?.data as { otp?: string } | undefined)?.otp ?? (data as { otp?: string } | null)?.otp ?? "";
   },
 
   async resetPassword(phone: string, otp: string, newPassword: string): Promise<void> {
@@ -176,13 +195,13 @@ export const authService = {
       return;
     }
 
-    const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+    const res = await fetchWithRetry(`${API_URL}/api/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, otp, newPassword }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to reset password");
+    const data = await parseBody(res);
+    if (!res.ok) throw new Error(data?.message || "Failed to reset password");
   },
 
   updateCurrentUser(updates: Partial<User>): User | null {

@@ -5,18 +5,32 @@ import { generateTeamId } from "../utils/idGenerator";
 const MOCK_MODE = false;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-async function apiFetch(endpoint: string, options: RequestInit = {}) {
+async function apiFetch(endpoint: string, options: RequestInit = {}): Promise<any> {
   const token = authService.getToken();
-  const res = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Request failed");
+  // Retry transient network failures (e.g. Render free-tier cold starts).
+  let res: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      res = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...options.headers,
+        },
+      });
+      break;
+    } catch {
+      if (attempt === 2) {
+        throw new Error("Couldn't reach the server. Please check your connection and try again.");
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+    }
+  }
+  const text = await res!.text();
+  let data: any = {};
+  try { data = text ? JSON.parse(text) : {}; } catch { /* non-JSON */ }
+  if (!res!.ok) throw new Error(data?.message || `Request failed (${res!.status})`);
   return data;
 }
 
