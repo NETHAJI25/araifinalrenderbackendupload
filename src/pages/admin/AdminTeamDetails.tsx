@@ -20,11 +20,17 @@ export default function AdminTeamDetails() {
   const [rejectReason, setRejectReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
   const [promoting, setPromoting] = useState(false);
+  const [demoting, setDemoting] = useState(false);
 
   // Check if team is in Round 1 and ready for promotion
   const isRound1 = team?.round === 1 || team?.round === undefined;
-  const leaderPaid = team?.leaderId && team.members.find(m => m.userId === team.leaderId)?.paymentStatus === "paid";
+  const isRound2 = team?.round === 2;
+  const leaderPaid = (() => {
+    const leader = team?.members.find((m) => m.userId === team?.leaderId);
+    return leader?.paymentStatus === "paid" || leader?.paymentStatus === "verified";
+  })();
   const canPromote = isRound1 && leaderPaid && team?.confirmationStatus !== "confirmed";
+  const canDemote = isRound2;
 
   const handlePromote = async () => {
     if (!teamId || !canPromote) return;
@@ -33,10 +39,24 @@ export default function AdminTeamDetails() {
       const updatedTeam = await teamService.updateTeamRound(teamId, 2);
       setTeam(updatedTeam);
       addToast({ type: "success", title: "Team promoted to Round 2!", message: "All members will now need to pay ₹200 each." });
-    } catch (err: any) {
-      addToast({ type: "error", title: err.message || "Failed to promote team" });
+    } catch (err) {
+      addToast({ type: "error", title: err instanceof Error ? err.message : "Failed to promote team" });
     } finally {
       setPromoting(false);
+    }
+  };
+
+  const handleDemote = async () => {
+    if (!teamId || !canDemote) return;
+    setDemoting(true);
+    try {
+      const updatedTeam = await teamService.updateTeamRound(teamId, 1);
+      setTeam(updatedTeam);
+      addToast({ type: "success", title: "Team moved back to Round 1" });
+    } catch (err) {
+      addToast({ type: "error", title: err instanceof Error ? err.message : "Failed to move team" });
+    } finally {
+      setDemoting(false);
     }
   };
 
@@ -50,7 +70,7 @@ export default function AdminTeamDetails() {
         ]);
         setTeam(data);
         setSubmission(submissions.find(s => s.teamId === teamId) || null);
-      } catch (err) {
+      } catch {
         addToast({ type: "error", title: "Failed to load team" });
       } finally {
         setLoading(false);
@@ -67,8 +87,8 @@ export default function AdminTeamDetails() {
       setTeam(updatedTeam);
       setRejectModalOpen(false);
       addToast({ type: "success", title: "Team rejected successfully" });
-    } catch (err: any) {
-      addToast({ type: "error", title: err.message || "Failed to reject team" });
+    } catch (err) {
+      addToast({ type: "error", title: err instanceof Error ? err.message : "Failed to reject team" });
     } finally {
       setRejecting(false);
     }
@@ -92,20 +112,30 @@ export default function AdminTeamDetails() {
                   Rejected
                 </span>
               )}
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-violet-100 text-violet-700">
+                Round {team.round ?? 1}
+              </span>
             </h1>
             <p className="text-sm text-gray-500 mt-1">Team ID: {team.teamId}</p>
           </div>
         </div>
-        {team.status !== "rejected" && (
-          <Button variant="secondary" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setRejectModalOpen(true)}>
-            Reject Team
-          </Button>
-        )}
-        {canPromote && (
-          <Button variant="primary" className="bg-green-600 hover:bg-green-700" onClick={handlePromote} loading={promoting} leftIcon={<ArrowUpRight className="w-4 h-4" />}>
-            Promote to Round 2
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {team.status !== "rejected" && (
+            <Button variant="secondary" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => setRejectModalOpen(true)}>
+              Reject Team
+            </Button>
+          )}
+          {canPromote && (
+            <Button variant="primary" className="bg-green-600 hover:bg-green-700" onClick={handlePromote} loading={promoting} leftIcon={<ArrowUpRight className="w-4 h-4" />}>
+              Promote to Round 2
+            </Button>
+          )}
+          {canDemote && (
+            <Button variant="secondary" onClick={handleDemote} loading={demoting}>
+              Move to Round 1
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -166,6 +196,10 @@ export default function AdminTeamDetails() {
           <div className="card p-6">
             <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Status Overview</h2>
             <div className="space-y-3">
+              <div className="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
+                <span className="text-gray-600">Current Round</span>
+                <span className="font-semibold text-violet-700">Round {team.round ?? 1}</span>
+              </div>
               <div className="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
                 <span className="text-gray-600">Confirmation</span>
                 <span className={`font-semibold flex items-center gap-1 ${team.confirmationStatus === "confirmed" ? "text-green-600" : "text-amber-600"}`}>

@@ -43,7 +43,6 @@ export default function TeamPage() {
   const [formError, setFormError] = useState("");
   const [joinError, setJoinError] = useState("");
 
-  const isPaid = user?.paymentStatus === "paid" || user?.paymentStatus === "verified";
   const isLeader = team?.leaderId === user?.id;
   const memberCount = team?.members.length || 0;
   const teamHasMinMembers = memberCount >= eventConfig.teamMin;
@@ -57,13 +56,21 @@ export default function TeamPage() {
   // Check if team is in round 1 (not yet selected for finals)
   const isRound1 = team?.round === 1 || team?.round === undefined;
   const isRound2 = team?.round === 2;
-  
-  // Round 1: Leader pays ₹100 to submit PPT
-  const leaderPaidRound1 = isLeader && isPaid && isRound1;
+  const currentRound = isRound2 ? 2 : 1;
+
+  // Per-round payment: a member can pay in Round 1 (leader) AND Round 2.
+  // The global payment_status is set by either round, so use `paidRounds`
+  // (derived server-side from the payments table) for round-specific checks.
+  const paidRoundsFor = (userId: string) =>
+    team?.members.find((m) => m.userId === userId)?.paidRounds ?? [];
+  const myPaidRounds = user ? paidRoundsFor(user.id) : [];
+  const hasPaidThisRound = myPaidRounds.includes(currentRound);
+  const leaderPaidRound1 = isRound1 && paidRoundsFor(team?.leaderId ?? "").includes(1);
+  const paidCount = team?.members.filter((m) => (m.paidRounds ?? []).includes(currentRound)).length ?? 0;
+  const allPaidRound2 = isRound2 && (team?.members.every((m) => (m.paidRounds ?? []).includes(2)) ?? false);
   
   // Round 2: All members pay ₹200
-  const canPayRound2 = teamIsComplete && !isPaid && isRound2;
-  const allPaidRound2 = isRound2 && (team?.members.every((m) => m.paymentStatus === "paid" || m.paymentStatus === "verified") ?? false);
+  const canPayRound2 = teamIsComplete && isRound2 && !hasPaidThisRound;
   
   const canConfirm = isLeader && teamIsComplete && allPaidRound2 && team?.confirmationStatus !== "confirmed";
 
@@ -149,20 +156,29 @@ export default function TeamPage() {
     }
   }
 
-  function handlePaymentSuccess() {
+  async function handlePaymentSuccess() {
     const fee = pendingOrder?.amount ?? (isRound1 ? round1Fee : round2Fee);
     addToast({ type: "success", title: "Payment successful!", message: `₹${fee} registration fee paid.` });
     setPendingOrder(null);
     // Reflect the new status everywhere immediately (backend already synced by verify/webhook).
     authService.updateCurrentUser({ paymentStatus: "paid" });
     refreshUser();
-    if (team && user) {
-      const updated = { ...team };
-      const memberIdx = updated.members.findIndex((m) => m.userId === user.id);
-      if (memberIdx >= 0) updated.members[memberIdx].paymentStatus = "paid";
-      // Round 1 leader payment advances the team view to Round 2.
-      if (isLeader && isRound1) updated.round = 2;
-      setTeam(updated);
+    // Re-fetch the team so the per-round `paidRounds` come straight from the server.
+    try {
+      const t = await teamService.getMyTeam();
+      setTeam(t);
+    } catch {
+      // Optimistic fallback if the refetch fails.
+      if (team && user) {
+        const updated = { ...team };
+        const memberIdx = updated.members.findIndex((m) => m.userId === user.id);
+        if (memberIdx >= 0) {
+          const member = updated.members[memberIdx];
+          member.paymentStatus = "paid";
+          member.paidRounds = Array.from(new Set([...(member.paidRounds ?? []), currentRound]));
+        }
+        setTeam(updated);
+      }
     }
   }
 
@@ -204,8 +220,6 @@ export default function TeamPage() {
       addToast({ type: "info", title: "Copied!", message: `Team ID ${team.teamId} copied.` });
     });
   }
-
-  const paidCount = team?.members.filter((m) => m.paymentStatus === "paid" || m.paymentStatus === "verified").length ?? 0;
 
   const statusLabels: Record<string, { label: string; cls: string }> = {
     pending: { label: "Pending Confirmation", cls: "bg-amber-50 border-amber-200 text-amber-700" },
@@ -445,7 +459,7 @@ export default function TeamPage() {
                     )}
                   </div>
 
-                  {!isPaid && canPayRound2 && (
+                  {!hasPaidThisRound && canPayRound2 && (
                     <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-amber-200 mb-3">
                       <div>
                         <p className="text-sm font-semibold text-gray-900">Your Payment</p>
@@ -458,7 +472,7 @@ export default function TeamPage() {
                     </div>
                   )}
 
-                  {isPaid && (
+                  {hasPaidThisRound && (
                     <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl border border-green-200 mb-3">
                       <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
                       <p className="text-sm font-semibold text-green-800">Your payment is complete (₹{round2Fee})</p>

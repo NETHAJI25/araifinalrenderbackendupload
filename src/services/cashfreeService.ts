@@ -1,4 +1,4 @@
-import type { Payment } from "../types";
+import type { Payment, AdminPayment, PaymentSummary } from "../types";
 import { authService } from "./authService";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://araifinalrenderbackendupload.onrender.com";
@@ -51,6 +51,12 @@ export const paymentService = {
 
   async getMyPayments(): Promise<Payment[]> {
     const response = await fetchWithAuth("/api/payments/my");
+    return response.data;
+  },
+
+  // Admin-only: every payment enriched with user + team info, plus totals.
+  async getAllPayments(): Promise<{ payments: AdminPayment[]; summary: PaymentSummary }> {
+    const response = await fetchWithAuth("/api/payments/admin/all");
     return response.data;
   },
 

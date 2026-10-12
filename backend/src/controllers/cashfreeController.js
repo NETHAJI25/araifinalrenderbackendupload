@@ -304,6 +304,75 @@ exports.getMyPayments = async (req, res) => {
   }
 };
 
+// ─── Admin: all payments ─────────────────────────────────────────────────────
+exports.getAllPayments = async (req, res) => {
+  try {
+    const { data: rows, error } = await supabase
+      .from('payments')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const payments = rows || [];
+
+    // Enrich with user + team info for the admin table.
+    const userIds = [...new Set(payments.map((p) => p.user_id).filter(Boolean))];
+    const userMap = {};
+    if (userIds.length) {
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, name, email, phone, team_id')
+        .in('id', userIds);
+      if (usersError) throw new Error(usersError.message);
+      (users || []).forEach((u) => { userMap[u.id] = u; });
+    }
+
+    const teamCodes = [...new Set(
+      payments.map((p) => parseMeta(p.reference).teamId).filter(Boolean)
+    )];
+    const teamMap = {};
+    if (teamCodes.length) {
+      const { data: teams, error: teamsError } = await supabase
+        .from('teams')
+        .select('team_id, team_name, round')
+        .in('team_id', teamCodes);
+      if (teamsError) throw new Error(teamsError.message);
+      (teams || []).forEach((t) => { teamMap[t.team_id] = t; });
+    }
+
+    const enriched = payments.map((row) => {
+      const pub = publicPayment(row);
+      const u = userMap[row.user_id] || {};
+      const teamCode = pub.teamId || u.team_id || null;
+      const t = teamCode ? teamMap[teamCode] : null;
+      return {
+        ...pub,
+        userName: u.name || 'Unknown',
+        userEmail: u.email || null,
+        userPhone: u.phone || null,
+        teamName: t?.team_name || null,
+      };
+    });
+
+    const paid = enriched.filter((p) => p.status === 'paid');
+    const sumAmount = (list) => list.reduce((total, p) => total + (Number(p.amount) || 0), 0);
+    const summary = {
+      total: enriched.length,
+      paid: paid.length,
+      pending: enriched.filter((p) => ['created', 'initiated', 'processing', 'pending'].includes(p.status)).length,
+      failed: enriched.filter((p) => ['failed', 'expired'].includes(p.status)).length,
+      totalCollected: sumAmount(paid),
+      round1Collected: sumAmount(paid.filter((p) => (p.round ?? 1) === 1)),
+      round2Collected: sumAmount(paid.filter((p) => p.round === 2)),
+    };
+
+    res.status(200).json({ success: true, data: { payments: enriched, summary } });
+  } catch (error) {
+    console.error('Get all payments error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 // ─── Webhook ─────────────────────────────────────────────────────────────────
 exports.handleWebhook = async (req, res) => {
   try {

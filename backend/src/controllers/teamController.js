@@ -10,7 +10,18 @@ const toISOStringSafe = (value) => {
   return value;
 };
 
-const formatTeam = (teamRow, memberRows) => {
+const parseReference = (reference) => {
+  if (!reference) return {};
+  try {
+    const parsed = JSON.parse(reference);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+  } catch (_) {
+    /* legacy / non-JSON reference */
+  }
+  return {};
+};
+
+const formatTeam = (teamRow, memberRows, paidRoundsByUser = {}) => {
   const team = {
     id: teamRow.id,
     teamId: teamRow.team_id,
@@ -25,7 +36,8 @@ const formatTeam = (teamRow, memberRows) => {
       role: m.role,
       paymentStatus: m.payment_status,
       profileCompleted: m.profile_completed,
-      joinedAt: toISOStringSafe(m.joined_at)
+      joinedAt: toISOStringSafe(m.joined_at),
+      paidRounds: paidRoundsByUser[m.user_id] || []
     })),
     status: teamRow.status,
     confirmationStatus: teamRow.confirmation_status,
@@ -53,7 +65,25 @@ async function fetchTeamByCode(code) {
     .eq('team_id', code)
     .order('joined_at');
   if (membersError) throw new Error(membersError.message);
-  return formatTeam(teamRow, memberRows || []);
+
+  // Per-round payment status: a member may pay in Round 1 (leader) AND Round 2.
+  const memberIds = (memberRows || []).map((m) => m.user_id);
+  const paidRoundsByUser = {};
+  if (memberIds.length) {
+    const { data: paidRows, error: paidError } = await supabase
+      .from('payments')
+      .select('user_id, reference')
+      .in('user_id', memberIds)
+      .eq('status', 'paid');
+    if (paidError) throw new Error(paidError.message);
+    (paidRows || []).forEach((p) => {
+      const round = parseReference(p.reference).round ?? 1;
+      const rounds = paidRoundsByUser[p.user_id] || (paidRoundsByUser[p.user_id] = []);
+      if (!rounds.includes(round)) rounds.push(round);
+    });
+  }
+
+  return formatTeam(teamRow, memberRows || [], paidRoundsByUser);
 }
 
 exports.createTeam = async (req, res) => {
@@ -321,6 +351,26 @@ exports.confirmTeam = async (req, res) => {
       return res.status(400).json({ success: false, message: 'All members must complete payment before confirmation' });
     }
 
+    // Round 2 requires each member to have an actual Round 2 payment on record
+    // (the global payment_status is also set by the Round 1 leader payment).
+    const memberIds = team.members.map((m) => m.userId);
+    const paidRound2Users = new Set();
+    if (memberIds.length) {
+      const { data: paidRows, error: paidError } = await supabase
+        .from('payments')
+        .select('user_id, reference')
+        .in('user_id', memberIds)
+        .eq('status', 'paid');
+      if (paidError) throw new Error(paidError.message);
+      (paidRows || []).forEach((p) => {
+        if ((parseReference(p.reference).round ?? 1) === 2) paidRound2Users.add(p.user_id);
+      });
+    }
+    const allPaidRound2 = team.members.every((m) => paidRound2Users.has(m.userId));
+    if (!allPaidRound2) {
+      return res.status(400).json({ success: false, message: 'All members must complete Round 2 payment before confirmation' });
+    }
+
     const { error } = await supabase
       .from('teams')
       .update({ confirmation_status: 'confirmed', updated_at: new Date().toISOString() })
@@ -407,7 +457,7 @@ exports.markTeamComplete = async (req, res) => {
 
     const { error } = await supabase
       .from('teams')
-      .update({ status: 'complete', round: 1, updated_at: new Date().toISOString() })
+      .update({ status: 'complete', updated_at: new Date().toISOString() })
       .eq('team_id', teamId);
     if (error) throw new Error(error.message);
 

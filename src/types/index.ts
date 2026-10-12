@@ -28,6 +28,7 @@ export interface TeamMember {
   paymentStatus: "pending" | "processing" | "paid" | "failed" | "verified";
   profileCompleted: boolean;
   joinedAt: string;
+  paidRounds?: number[];
 }
 
 export interface Team {
@@ -52,7 +53,7 @@ export interface Payment {
   userId: string;
   amount: number;
   currency: string;
-  status: "pending" | "processing" | "paid" | "failed" | "verified";
+  status: "created" | "initiated" | "pending" | "processing" | "paid" | "failed" | "expired" | "verified";
   reference: string | null;
   createdAt: string;
   updatedAt: string;
@@ -61,6 +62,26 @@ export interface Payment {
   cfPaymentId?: string | null;
   paymentSessionId?: string | null;
   round?: number;
+  teamId?: string | null;
+  method?: string | null;
+}
+
+// ─── Admin payment (payment + joined user/team info) ──────────────────────────
+export interface AdminPayment extends Payment {
+  userName: string;
+  userEmail: string | null;
+  userPhone: string | null;
+  teamName: string | null;
+}
+
+export interface PaymentSummary {
+  total: number;
+  paid: number;
+  pending: number;
+  failed: number;
+  totalCollected: number;
+  round1Collected: number;
+  round2Collected: number;
 }
 
 // ─── Submission ───────────────────────────────────────────────────────────────
