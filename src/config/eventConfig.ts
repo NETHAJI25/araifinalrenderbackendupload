@@ -43,6 +43,7 @@ export const eventConfig = {
   whatsappGroupUrl: "https://chat.whatsapp.com/Hwfr2VHCcrnJ0bsF5eSYRN",
   adminEmails: [
     "Contact11induskiller@gmail.com",
-    "aravindmuthiah23@gmail.com"
+    "aravindmuthiah23@gmail.com",
+    "nethajiramesh25@gmail.com"
   ],
 };

@@ -78,7 +78,9 @@ export default function AdminTeamDetails() {
     setRejecting(true);
     try {
       const updatedTeam = await teamService.rejectTeam(teamId, rejectReason);
-      setTeam(updatedTeam);
+      // The reject endpoint returns the updated team; if it ever omits the body,
+      // fall back to marking the team rejected locally instead of blanking the page.
+      setTeam(updatedTeam ?? (team ? { ...team, status: "rejected", rejectionReason: rejectReason } : null));
       setRejectModalOpen(false);
       addToast({ type: "success", title: "Team rejected successfully" });
     } catch (err) {

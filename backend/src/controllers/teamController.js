@@ -485,7 +485,8 @@ exports.rejectTeam = async (req, res) => {
       .eq('team_id', teamId);
     if (error) throw new Error(error.message);
 
-    res.status(200).json({ success: true, message: 'Team rejected successfully' });
+    const updatedTeam = await fetchTeamByCode(teamId);
+    res.status(200).json({ success: true, message: 'Team rejected successfully', data: updatedTeam });
   } catch (error) {
     console.error('Reject team error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
