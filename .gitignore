@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated at build time by scripts/generate-sitemap.mjs
+public/sitemap.xml
+
 # Environment files (contain secrets - never commit these)
 .env
 .env.local

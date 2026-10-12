@@ -4,6 +4,7 @@ import { problemStatements } from "../data/problemStatements";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { eventConfig } from "../config/eventConfig";
+import Seo from "../components/seo/Seo";
 
 export default function ProblemStatementDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,7 +28,21 @@ export default function ProblemStatementDetailPage() {
 
   return (
     <>
-      <title>{`${ps.localPsNumber} — ${ps.title} | ${eventConfig.hackathonName}`}</title>
+      <Seo
+        title={`${ps.localPsNumber} ${ps.title} | ${eventConfig.hackathonName} Problem Statement`}
+        description={`${ps.localPsNumber}: ${ps.title} — a ${ps.category} problem statement in the ${ps.theme} theme at ${eventConfig.hackathonName}, a national-level 36-hour student hackathon in ${eventConfig.location}.`}
+        path={`/problem-statements/${ps.id}`}
+        type="article"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://www.innovators-arena-tau.site/" },
+            { "@type": "ListItem", position: 2, name: "Problem Statements", item: "https://www.innovators-arena-tau.site/problem-statements" },
+            { "@type": "ListItem", position: 3, name: `${ps.localPsNumber} — ${ps.title}` },
+          ],
+        }}
+      />
 
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

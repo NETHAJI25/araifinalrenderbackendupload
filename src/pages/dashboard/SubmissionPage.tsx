@@ -7,6 +7,7 @@ import { documents } from "../../data/documents";
 import { Button } from "../../components/ui/Button";
 import type { Team } from "../../types";
 import { eventConfig } from "../../config/eventConfig";
+import Seo from "../../components/seo/Seo";
 
 export default function SubmissionPage() {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ export default function SubmissionPage() {
 
   return (
     <>
-      <title>{`Submission | ${eventConfig.hackathonName}`}</title>
+      <Seo title={`Submission | ${eventConfig.hackathonName}`} noindex />
 
       <div className="mb-8">
         <p className="text-violet-700 text-xs font-bold tracking-widest uppercase mb-1">

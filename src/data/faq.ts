@@ -26,7 +26,7 @@ export const faqs: FAQItem[] = [
     id: "faq2",
     question: "How do I register for Innovators Arena 2.0?",
     answer:
-      "Click Register Now on the homepage, create your account, complete your profile, then create or join a team. Once your team is complete, each member pays the ₹200 fee individually.",
+      "Click Register Now on the homepage, create your account, complete your profile, then create or join a team of 4–6 members. The Team Leader then pays the ₹100 Round 1 fee to unlock the project submission form.",
     category: "Registration",
   },
   {
@@ -47,21 +47,21 @@ export const faqs: FAQItem[] = [
     id: "faq5",
     question: "How much is the registration fee?",
     answer:
-      "₹200 per participant. This is an individual fee and must be paid by each team member separately after the team is complete. The fee covers your full participation in the 36-hour hackathon.",
+      "The fee is split across rounds. Round 1: the Team Leader pays ₹100, which unlocks the project submission form. Round 2: teams selected for the offline finals pay ₹200 per member. The fee covers your full participation in the 36-hour hackathon.",
     category: "Payment",
   },
   {
     id: "faq6",
     question: "When do I pay the registration fee?",
     answer:
-      "Payment becomes available after your team is complete (has 2–6 members with required details). Each member pays ₹200 individually. All members must pay before submission is unlocked.",
+      "Round 1 requires a ₹100 payment by the Team Leader, which unlocks the project submission form. The Round 2 payment (₹200 per member) applies only to teams selected for the offline finals.",
     category: "Payment",
   },
   {
     id: "faq7",
     question: "How many members can be in a team?",
     answer:
-      "2 to 6 members. Teams with fewer than 2 or more than 6 members are not allowed. Mixed-college teams are permitted.",
+      "4 to 6 members. Teams with fewer than 4 or more than 6 members are not allowed. Mixed-college teams are permitted.",
     category: "Teams",
   },
   {
@@ -94,16 +94,16 @@ export const faqs: FAQItem[] = [
   },
   {
     id: "faq12",
-    question: "Who can submit the final form?",
+    question: "Who can submit the Round 1 project form?",
     answer:
-      "The Team Leader. Only the Team Leader has access to the final Google Form submission. Other members can view the submission status but cannot submit on behalf of the team.",
+      "The Team Leader. The Round 1 project submission form is only available to the Team Leader once the ₹100 Round 1 fee has been paid. Other members can see the team but cannot submit on behalf of the team.",
     category: "Submission",
   },
   {
     id: "faq13",
-    question: "What is required to unlock submission?",
+    question: "How does the round system work?",
     answer:
-      "All of the following must be true: (1) Team has 2–6 members, (2) Team details are complete, (3) Every member has paid ₹200, (4) Team Leader has confirmed the team.",
+      "Round 1: the Team Leader pays ₹100 and submits the team's project through the Round 1 form. The organisers then select teams to advance. Round 2: selected teams pay ₹200 per member and take part in the 36-hour offline grand finale. There is no second submission form.",
     category: "Submission",
   },
   {

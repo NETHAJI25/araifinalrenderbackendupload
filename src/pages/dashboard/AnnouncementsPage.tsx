@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Megaphone, Info, CheckCircle, AlertTriangle, RefreshCw } from "lucide-react";
 import { eventConfig } from "../../config/eventConfig";
+import Seo from "../../components/seo/Seo";
 import { announcementService } from "../../services/announcementService";
 import type { Announcement } from "../../types";
 
@@ -31,7 +32,7 @@ export default function AnnouncementsPage() {
 
   return (
     <>
-      <title>{`Announcements | ${eventConfig.hackathonName}`}</title>
+      <Seo title={`Announcements | ${eventConfig.hackathonName}`} noindex />
       <div className="mb-8">
         <p className="text-violet-700 text-xs font-bold tracking-widest uppercase mb-1">Updates</p>
         <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">

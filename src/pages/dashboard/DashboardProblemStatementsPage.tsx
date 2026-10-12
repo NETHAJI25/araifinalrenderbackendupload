@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { problemStatements, themes } from "../../data/problemStatements";
 import { eventConfig } from "../../config/eventConfig";
+import Seo from "../../components/seo/Seo";
 
 const PAGE_SIZE = 20;
 
@@ -32,7 +33,7 @@ export default function DashboardProblemStatementsPage() {
 
   return (
     <>
-      <title>{`Problem Statements | ${eventConfig.hackathonName}`}</title>
+      <Seo title={`Problem Statements | ${eventConfig.hackathonName}`} noindex />
 
       <div className="mb-8">
         <p className="text-violet-700 text-xs font-bold tracking-widest uppercase mb-1">Browse Challenges</p>

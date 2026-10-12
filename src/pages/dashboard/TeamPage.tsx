@@ -18,6 +18,7 @@ import { Badge } from "../../components/ui/Badge";
 import { paymentStatusLabel } from "../../utils/formatters";
 import type { Team } from "../../types";
 import { eventConfig } from "../../config/eventConfig";
+import Seo from "../../components/seo/Seo";
 
 const psOptions = problemStatements.map((ps) => ({
   value: ps.id,
@@ -229,7 +230,7 @@ export default function TeamPage() {
 
   return (
     <>
-      <title>{`My Team | ${eventConfig.hackathonName}`}</title>
+      <Seo title={`My Team | ${eventConfig.hackathonName}`} noindex />
       <div className="mb-8">
         <p className="text-violet-700 text-xs font-bold tracking-widest uppercase mb-1">Team Management</p>
         <h1 className="text-2xl font-black text-gray-900">My Team</h1>

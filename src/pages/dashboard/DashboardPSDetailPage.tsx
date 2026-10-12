@@ -4,6 +4,7 @@ import { problemStatements } from "../../data/problemStatements";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { eventConfig } from "../../config/eventConfig";
+import Seo from "../../components/seo/Seo";
 
 export default function DashboardPSDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +24,7 @@ export default function DashboardPSDetailPage() {
 
   return (
     <>
-      <title>{`${ps.localPsNumber} | ${eventConfig.hackathonName}`}</title>
+      <Seo title={`${ps.localPsNumber} | ${eventConfig.hackathonName}`} noindex />
 
       <div className="mb-6">
         <button onClick={() => navigate("/dashboard/problem-statements")}

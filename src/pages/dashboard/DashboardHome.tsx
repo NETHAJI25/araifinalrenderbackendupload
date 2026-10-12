@@ -7,6 +7,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { profileCompletionPercent, paymentStatusLabel } from "../../utils/formatters";
 import { eventConfig } from "../../config/eventConfig";
+import Seo from "../../components/seo/Seo";
 import { teamService } from "../../services/teamService";
 import type { Team } from "../../types";
 
@@ -96,7 +97,7 @@ export default function DashboardHome() {
 
   return (
     <>
-      <title>{`Dashboard | ${eventConfig.hackathonName}`}</title>
+      <Seo title={`Dashboard | ${eventConfig.hackathonName}`} noindex />
 
       <div className="mb-8">
         <p className="text-violet-700 text-xs font-bold tracking-widest uppercase mb-1">Dashboard</p>

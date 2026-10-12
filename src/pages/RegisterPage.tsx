@@ -8,6 +8,7 @@ import { Input, Select } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { IALogoMark } from "../components/ui/IALogo";
 import { eventConfig } from "../config/eventConfig";
+import Seo from "../components/seo/Seo";
 
 const TERMS_POINTS = [
   "Only current students (UG/PG/Diploma) are eligible to participate.",
@@ -109,7 +110,12 @@ export default function RegisterPage() {
 
   return (
     <>
-      <title>{`Register | ${eventConfig.hackathonName}`}</title>
+      <Seo
+        title={`Register | ${eventConfig.hackathonName}`}
+        description={`Create your ${eventConfig.hackathonName} account and register for the national-level 36-hour student hackathon in ${eventConfig.location}.`}
+        path="/register"
+        noindex
+      />
       <div className="min-h-[calc(100vh-4rem)] bg-gray-50 py-10 px-4">
         <div className="max-w-lg mx-auto">
           <div className="text-center mb-8">

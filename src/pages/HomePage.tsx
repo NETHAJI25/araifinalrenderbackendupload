@@ -15,6 +15,17 @@ import { faqs, faqCategories } from "../data/faq";
 import iaWbImage from "../assets/ia wb.png";
 import { contactService } from "../services/contactService";
 import { useToast } from "../contexts/ToastContext";
+import Seo from "../components/seo/Seo";
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.question,
+    acceptedAnswer: { "@type": "Answer", text: f.answer },
+  })),
+};
 
 // ─── Animation helpers ────────────────────────────────────────────────────────
 function useFadeUp(i = 0) {
@@ -68,6 +79,10 @@ function HeroSection() {
               transition={{ duration: 0.45, delay: 0.08 }}
               className="text-5xl sm:text-6xl lg:text-7xl font-black text-gray-900 leading-tight mb-6"
             >
+              <span className="sr-only">
+                {eventConfig.hackathonName} — national-level 36-hour student hackathon in{" "}
+                {eventConfig.location}.{" "}
+              </span>
               {eventConfig.tagline}
             </motion.h1>
 
@@ -156,7 +171,7 @@ function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex items-center justify-center w-full mt-8 lg:mt-0"
           >
-            <img src={iaWbImage} alt="Innovators Arena Hero" className="w-full max-w-[400px] lg:max-w-[500px] xl:max-w-[600px] object-contain hover:scale-[1.02] transition-transform duration-300" />
+            <img src={iaWbImage} alt="Innovators Arena 2.0 hackathon branding" width={1887} height={1744} fetchPriority="high" className="w-full max-w-[400px] lg:max-w-[500px] xl:max-w-[600px] object-contain hover:scale-[1.02] transition-transform duration-300" />
           </motion.div>
         </div>
       </div>
@@ -378,7 +393,7 @@ function OrganizersSection() {
             <motion.div key={org.id} {...useFadeUp(i)}
               className={`card p-6 flex flex-col items-center text-center hover:border-violet-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full max-w-[340px] mx-auto min-h-[280px]${isOrphanLast ? " lg:col-start-2 lg:col-span-2" : ""}`}>
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-violet-100 mb-5 bg-gray-100 shadow-md">
-                <img src={org.photo} alt={org.name} className="w-full h-full object-cover" />
+                <img src={org.photo} alt={`${org.name} — Innovators Arena 2.0 organiser`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-1">{org.name}</h3>
               <p className="text-sm text-violet-600 font-semibold">{org.designation}</p>
@@ -410,7 +425,7 @@ function SponsorsSection() {
             <motion.div key={sp.id} {...useFadeUp(i)}
               className="card p-8 flex flex-col items-center justify-center text-center min-h-[220px] hover:border-violet-300 hover:shadow-xl transition-all duration-300">
               <div className="h-28 w-full flex items-center justify-center mb-5">
-                <img src={sp.logo} alt={`${sp.name} logo`} className="max-h-full max-w-full object-contain" />
+                <img src={sp.logo} alt={`${sp.name} — Innovators Arena 2.0 sponsor`} loading="lazy" decoding="async" className="max-h-full max-w-full object-contain" />
               </div>
               <p className="text-base font-bold text-gray-900">{sp.name}</p>
             </motion.div>
@@ -602,8 +617,12 @@ function FinalCTA() {
 export default function HomePage() {
   return (
     <>
-      <title>{`${eventConfig.hackathonName} | National-Level 36-Hour Hackathon`}</title>
-      <meta name="description" content={`Join ${eventConfig.hackathonName}, a national-level 36-hour student hackathon in ${eventConfig.location}. ${eventConfig.finalRound}.`} />
+      <Seo
+        title={`${eventConfig.hackathonName} | National-Level 36-Hour Student Hackathon 2027`}
+        description={`Join ${eventConfig.hackathonName}, a national-level 36-hour student hackathon in ${eventConfig.location}. Open to all students. 240+ problem statements across 16 themes. ${eventConfig.finalRound}.`}
+        path="/"
+        jsonLd={faqJsonLd}
+      />
       <HeroSection />
       <RegistrationCTA />
       <AboutSection />

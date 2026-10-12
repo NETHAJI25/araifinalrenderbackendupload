@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { SplitText } from "../components/animations/SplitText";
 import { problemStatements, themes } from "../data/problemStatements";
 import { eventConfig } from "../config/eventConfig";
+import Seo from "../components/seo/Seo";
 
 const PAGE_SIZE = 20;
 
@@ -33,7 +34,11 @@ export default function ProblemStatementsPage() {
 
   return (
     <>
-      <title>{`Problem Statements | ${eventConfig.hackathonName}`}</title>
+      <Seo
+        title={`Problem Statements | ${eventConfig.hackathonName} Hackathon`}
+        description={`Explore 240+ hackathon problem statements at ${eventConfig.hackathonName} across 16 themes including Smart Education, Healthcare, Agriculture and more. Filter by software or hardware and register to select yours.`}
+        path="/problem-statements"
+      />
 
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

@@ -1,0 +1,9 @@
+# Innovators Arena 2.0 - https://www.innovators-arena-tau.site
+User-agent: *
+Allow: /
+
+# Private app areas (login required) - keep out of search
+Disallow: /dashboard
+Disallow: /admin
+
+Sitemap: https://www.innovators-arena-tau.site/sitemap.xml

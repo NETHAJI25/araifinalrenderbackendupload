@@ -10,6 +10,7 @@ import { Modal } from "../components/ui/Modal";
 import { IALogoMark } from "../components/ui/IALogo";
 import { authService } from "../services/authService";
 import { eventConfig } from "../config/eventConfig";
+import Seo from "../components/seo/Seo";
 
 interface FormData {
   email: string;
@@ -129,7 +130,12 @@ export default function LoginPage() {
 
   return (
     <>
-      <title>{`Login | ${eventConfig.hackathonName}`}</title>
+      <Seo
+        title={`Login | ${eventConfig.hackathonName}`}
+        description={`Sign in to your ${eventConfig.hackathonName} account to manage your team, pay round fees and view problem statements.`}
+        path="/login"
+        noindex
+      />
       <div className="min-h-[calc(100vh-4rem)] bg-gray-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="card p-8 shadow-lg">

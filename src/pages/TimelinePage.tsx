@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { SplitText } from "../components/animations/SplitText";
 import { timeline } from "../data/timeline";
 import { eventConfig } from "../config/eventConfig";
+import Seo from "../components/seo/Seo";
 
 const statusConfig = {
   completed: { color: "border-green-500 bg-green-500", textColor: "text-green-700", label: "Completed", icon: <CheckCircle className="w-4 h-4" /> },
@@ -74,7 +75,11 @@ export default function TimelinePage() {
 
   return (
     <>
-      <title>{`Timeline | ${eventConfig.hackathonName}`}</title>
+      <Seo
+        title={`Event Timeline | ${eventConfig.hackathonName} Hackathon`}
+        description={`Key dates and rounds for ${eventConfig.hackathonName}, a national-level 36-hour student hackathon in ${eventConfig.location}: registration, Round 1, Round 2 payment and the offline grand finale.`}
+        path="/timeline"
+      />
 
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

@@ -9,6 +9,7 @@ import { Button } from "../../components/ui/Button";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { profileCompletionPercent } from "../../utils/formatters";
 import { eventConfig } from "../../config/eventConfig";
+import Seo from "../../components/seo/Seo";
 
 const yearOptions = [
   { value: "1st Year", label: "1st Year" },
@@ -62,7 +63,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <title>{`Profile | ${eventConfig.hackathonName}`}</title>
+      <Seo title={`Profile | ${eventConfig.hackathonName}`} noindex />
 
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
