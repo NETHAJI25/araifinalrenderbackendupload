@@ -263,8 +263,8 @@ exports.getPaymentStatus = async (req, res) => {
     let status = payment.status;
     let cfPaymentId = meta.cfPaymentId || null;
 
-    if (meta.cfOrderId) {
-      const orderResult = await cashfree.PGFetchOrder(meta.cfOrderId);
+    if (meta.orderId) {
+      const orderResult = await cashfree.PGFetchOrder(meta.orderId);
       if (orderResult.data) {
         const cfOrder = orderResult.data;
         status = mapCashfreeStatus(cfOrder.order_status, payment.status);
@@ -351,8 +351,8 @@ exports.handleWebhook = async (req, res) => {
     const meta = parseMeta(payment.reference);
 
     // Authoritative server-to-server verification: only trust Cashfree.
-    if (meta.cfOrderId) {
-      const orderResult = await cashfree.PGFetchOrder(meta.cfOrderId);
+    if (meta.orderId) {
+      const orderResult = await cashfree.PGFetchOrder(meta.orderId);
       if (!orderResult.data || orderResult.data.order_status !== 'PAID') {
         return res.status(200).json({ success: true, message: 'Order not paid yet' });
       }
@@ -387,11 +387,11 @@ exports.verifyPayment = async (req, res) => {
     }
 
     const meta = parseMeta(payment.reference);
-    if (!meta.cfOrderId) {
+    if (!meta.orderId) {
       return res.status(400).json({ success: false, message: 'No Cashfree order associated' });
     }
 
-    const orderResult = await cashfree.PGFetchOrder(meta.cfOrderId);
+    const orderResult = await cashfree.PGFetchOrder(meta.orderId);
     if (!orderResult.data) {
       return res.status(500).json({ success: false, message: 'Failed to fetch order from Cashfree' });
     }
