@@ -25,10 +25,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Forgot password (mobile number + on-screen OTP)
+  // Forgot password (mobile number or email + on-screen OTP)
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotStep, setForgotStep] = useState<"phone" | "reset">("phone");
-  const [forgotPhone, setForgotPhone] = useState("");
+  const [forgotIdentifier, setForgotIdentifier] = useState("");
   const [generatedOtp, setGeneratedOtp] = useState("");
   const [forgotOtp, setForgotOtp] = useState("");
   const [forgotNewPassword, setForgotNewPassword] = useState("");
@@ -41,7 +41,7 @@ export default function LoginPage() {
 
   function resetForgotState() {
     setForgotStep("phone");
-    setForgotPhone("");
+    setForgotIdentifier("");
     setGeneratedOtp("");
     setForgotOtp("");
     setForgotNewPassword("");
@@ -56,14 +56,14 @@ export default function LoginPage() {
 
   async function handleSendOtp(e: FormEvent) {
     e.preventDefault();
-    const phone = forgotPhone.trim();
-    if (!phone) {
-      addToast({ type: "error", title: "Mobile number required", message: "Please enter your registered mobile number." });
+    const identifier = forgotIdentifier.trim();
+    if (!identifier) {
+      addToast({ type: "error", title: "Required", message: "Please enter your registered mobile number or email." });
       return;
     }
     setForgotLoading(true);
     try {
-      const otp = await authService.sendOTP(phone);
+      const otp = await authService.sendOTP(identifier);
       setGeneratedOtp(otp);
       setForgotStep("reset");
       addToast({ type: "success", title: "OTP generated", message: "Enter the OTP shown below to reset your password." });
@@ -80,7 +80,7 @@ export default function LoginPage() {
 
   async function handleResetPassword(e: FormEvent) {
     e.preventDefault();
-    const phone = forgotPhone.trim();
+    const identifier = forgotIdentifier.trim();
     if (!forgotOtp.trim()) {
       addToast({ type: "error", title: "OTP required", message: "Please enter the OTP." });
       return;
@@ -95,7 +95,7 @@ export default function LoginPage() {
     }
     setForgotLoading(true);
     try {
-      await authService.resetPassword(phone, forgotOtp.trim(), forgotNewPassword);
+      await authService.resetPassword(identifier, forgotOtp.trim(), forgotNewPassword);
       addToast({ type: "success", title: "Password updated", message: "You can now sign in with your new password." });
       closeForgot();
     } catch (err) {
@@ -214,16 +214,15 @@ export default function LoginPage() {
         {forgotStep === "phone" ? (
           <form onSubmit={handleSendOtp} className="space-y-5">
             <p className="text-sm text-gray-500">
-              Enter the mobile number you registered with. We'll generate an OTP to verify it's you.
+              Enter the mobile number or email you registered with. We'll generate an OTP to verify it's you.
             </p>
             <Input
-              label="Mobile Number"
-              type="tel"
-              inputMode="numeric"
-              placeholder="e.g. 9876543210"
+              label="Mobile Number or Email"
+              type="text"
+              placeholder="e.g. 9876543210 or you@example.com"
               required
-              value={forgotPhone}
-              onChange={(e) => setForgotPhone(e.target.value)}
+              value={forgotIdentifier}
+              onChange={(e) => setForgotIdentifier(e.target.value)}
             />
             <Button type="submit" variant="primary" size="lg" loading={forgotLoading} className="w-full">
               Generate OTP
@@ -269,7 +268,7 @@ export default function LoginPage() {
                 onClick={() => { setForgotStep("phone"); setForgotOtp(""); }}
                 className="text-sm font-medium text-gray-500 hover:text-gray-700"
               >
-                ← Change number
+                ← Change number/email
               </button>
               <Button type="submit" variant="primary" loading={forgotLoading} className="px-5">
                 Reset Password

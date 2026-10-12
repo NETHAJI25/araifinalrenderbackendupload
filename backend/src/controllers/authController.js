@@ -254,19 +254,29 @@ exports.sendOTP = async (req, res) => {
     const column = phone ? 'phone' : 'email';
     const value = phone ? String(phone).trim() : email;
 
-    const { data: existingUser, error: userError } = await supabase
+    const { data: matches, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq(column, value)
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(10);
 
     if (userError) throw new Error(userError.message);
-    if (!existingUser) {
+    if (!matches || matches.length === 0) {
       return res.status(404).json({
         success: false,
         message: phone ? 'No account found with this mobile number' : 'No account found with this email'
       });
     }
+    if (matches.length > 1) {
+      return res.status(409).json({
+        success: false,
+        message: phone
+          ? 'Multiple accounts use this mobile number. Please use your email address instead to reset your password.'
+          : 'Multiple accounts use this email. Please contact support.'
+      });
+    }
+    const existingUser = matches[0];
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -327,15 +337,26 @@ exports.resetPassword = async (req, res) => {
     const column = phone ? 'phone' : 'email';
     const value = phone ? String(phone).trim() : email;
 
-    const { data: user, error: userError } = await supabase
+    const { data: matches, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq(column, value)
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(10);
 
-    if (userError || !user) {
+    if (userError) throw new Error(userError.message);
+    if (!matches || matches.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
+    if (matches.length > 1) {
+      return res.status(409).json({
+        success: false,
+        message: phone
+          ? 'Multiple accounts use this mobile number. Please use your email address instead to reset your password.'
+          : 'Multiple accounts use this email. Please contact support.'
+      });
+    }
+    const user = matches[0];
 
     const key = otpKey({ phone, email });
     const entry = readOtp(key);

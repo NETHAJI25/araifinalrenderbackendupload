@@ -173,32 +173,34 @@ export const authService = {
     }
   },
 
-  async sendOTP(phone: string): Promise<string> {
+  async sendOTP(identifier: string): Promise<string> {
     if (MOCK_MODE) {
       await new Promise((r) => setTimeout(r, 500));
       return "123456";
     }
 
+    const isEmail = identifier.includes("@");
     const res = await fetchWithRetry(`${API_URL}/api/auth/send-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify(isEmail ? { email: identifier } : { phone: identifier }),
     });
     const data = await parseBody(res);
     if (!res.ok) throw new Error(data?.message || "Failed to send OTP");
-    return (data?.data as { otp?: string } | undefined)?.otp ?? (data as { otp?: string } | null)?.otp ?? "";
+    return ((data as { otp?: string } | null)?.otp) ?? "";
   },
 
-  async resetPassword(phone: string, otp: string, newPassword: string): Promise<void> {
+  async resetPassword(identifier: string, otp: string, newPassword: string): Promise<void> {
     if (MOCK_MODE) {
       await new Promise((r) => setTimeout(r, 500));
       return;
     }
 
+    const isEmail = identifier.includes("@");
     const res = await fetchWithRetry(`${API_URL}/api/auth/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, otp, newPassword }),
+      body: JSON.stringify(isEmail ? { email: identifier, otp, newPassword } : { phone: identifier, otp, newPassword }),
     });
     const data = await parseBody(res);
     if (!res.ok) throw new Error(data?.message || "Failed to reset password");
