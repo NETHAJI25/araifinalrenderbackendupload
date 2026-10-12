@@ -18,6 +18,30 @@ function createSessionToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
+// In-memory OTP store: key -> { otp, expiresAt }.
+// Used for password resets because the users table has no otp columns
+// and no SMS/email gateway is configured (OTP is shown on screen).
+const otpStore = new Map();
+const OTP_TTL_MS = 10 * 60 * 1000;
+
+function otpKey({ phone, email }) {
+  return phone ? `phone:${String(phone).trim()}` : `email:${String(email).trim().toLowerCase()}`;
+}
+
+function saveOtp(key, otp) {
+  otpStore.set(key, { otp, expiresAt: Date.now() + OTP_TTL_MS });
+}
+
+function readOtp(key) {
+  const entry = otpStore.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt < Date.now()) {
+    otpStore.delete(key);
+    return null;
+  }
+  return entry;
+}
+
 exports.register = async (req, res) => {
   try {
     const { name, email, phone, college, password, acceptTerms } = req.body;
@@ -246,10 +270,7 @@ exports.sendOTP = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    await supabase
-      .from('users')
-      .update({ otp, otp_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() })
-      .eq('id', existingUser.id);
+    saveOtp(otpKey({ phone, email }), otp);
 
     // Email delivery is only attempted when an email address and a mail key are available.
     if (email && process.env.RESEND_API_KEY) {
@@ -316,12 +337,10 @@ exports.resetPassword = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (!user.otp || user.otp !== otp) {
-      return res.status(400).json({ success: false, message: 'Invalid OTP' });
-    }
-
-    if (user.otp_expires_at && new Date(user.otp_expires_at).getTime() < Date.now()) {
-      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    const key = otpKey({ phone, email });
+    const entry = readOtp(key);
+    if (!entry || entry.otp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please request a new one.' });
     }
 
     if (newPassword.length < 6) {
@@ -332,8 +351,10 @@ exports.resetPassword = async (req, res) => {
 
     await supabase
       .from('users')
-      .update({ password: hashedPassword, otp: null, otp_expires_at: null })
+      .update({ password: hashedPassword })
       .eq('id', user.id);
+
+    otpStore.delete(key);
 
     res.status(200).json({ success: true, message: 'Password reset successfully' });
   } catch (error) {

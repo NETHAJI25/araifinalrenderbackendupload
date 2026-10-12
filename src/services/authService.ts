@@ -29,6 +29,17 @@ function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+// Parse a response body safely (Render cold starts can return non-JSON errors).
+async function parseBody(res: Response): Promise<{ message?: string; data?: unknown } | null> {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export const authService = {
   async login(email: string, password: string): Promise<User> {
     if (MOCK_MODE) {
@@ -75,10 +86,10 @@ export const authService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Login failed");
-    const loggedInUser = { ...data.data.user, role: getUserRole(data.data.user.email) };
-    saveSession(loggedInUser, data.data.token);
+    const data = await parseBody(res);
+    if (!res.ok) throw new Error(data?.message || `Login failed (${res.status}). Please try again.`);
+    const loggedInUser = { ...(data!.data as { user: User }).user, role: getUserRole((data!.data as { user: User }).user.email) };
+    saveSession(loggedInUser, (data!.data as { token: string }).token);
     return loggedInUser;
   },
 
@@ -113,10 +124,11 @@ export const authService = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...data, acceptTerms: true }),
     });
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.message || "Registration failed");
-    const registeredUser = { ...result.data.user, role: getUserRole(result.data.user.email) };
-    saveSession(registeredUser, result.data.token);
+    const result = await parseBody(res);
+    if (!res.ok) throw new Error(result?.message || `Registration failed (${res.status}). Please try again.`);
+    const payload = result!.data as { user: User; token: string };
+    const registeredUser = { ...payload.user, role: getUserRole(payload.user.email) };
+    saveSession(registeredUser, payload.token);
     return registeredUser;
   },
 

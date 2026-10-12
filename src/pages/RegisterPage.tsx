@@ -94,8 +94,12 @@ export default function RegisterPage() {
       });
       addToast({ type: "success", title: "Account created!", message: `Welcome to ${eventConfig.hackathonName}.` });
       navigate("/dashboard");
-    } catch {
-      addToast({ type: "error", title: "Registration failed", message: "Please try again." });
+    } catch (err) {
+      addToast({
+        type: "error",
+        title: "Registration failed",
+        message: err instanceof Error ? err.message : "Please try again.",
+      });
     } finally {
       setIsLoading(false);
     }

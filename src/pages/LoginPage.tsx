@@ -120,8 +120,8 @@ export default function LoginPage() {
       } else {
         navigate(from, { replace: true });
       }
-    } catch {
-      addToast({ type: "error", title: "Login failed", message: "Please check your credentials and try again." });
+    } catch (err) {
+      addToast({ type: "error", title: "Login failed", message: err instanceof Error ? err.message : "Please check your credentials and try again." });
     } finally {
       setIsLoading(false);
     }
