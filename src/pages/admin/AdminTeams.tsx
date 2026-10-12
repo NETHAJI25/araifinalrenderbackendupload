@@ -2,12 +2,10 @@ import { useState, useEffect } from "react";
 import { Search, Ban, Mail, Eye, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { teamService } from "../../services/teamService";
-import { submissionService } from "../../services/submissionService";
-import type { Team, Submission } from "../../types";
+import type { Team } from "../../types";
 
 export default function AdminTeams() {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -23,12 +21,8 @@ export default function AdminTeams() {
   async function loadData() {
     setIsLoading(true);
     try {
-      const [teamsData, submissionsData] = await Promise.all([
-        teamService.getAll(),
-        submissionService.getAll()
-      ]);
+      const teamsData = await teamService.getAll();
       setTeams(teamsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      setSubmissions(submissionsData);
     } catch (error) {
       console.error("Failed to load teams:", error);
     } finally {
@@ -194,7 +188,7 @@ export default function AdminTeams() {
                 <th className="px-5 py-3">Round</th>
                 <th className="px-5 py-3">Payment</th>
                 <th className="px-5 py-3">Team Status</th>
-                <th className="px-5 py-3">Submission Status</th>
+                <th className="px-5 py-3">Round 1 Fee</th>
                 <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -213,8 +207,8 @@ export default function AdminTeams() {
                 </tr>
               ) : (
                 filteredTeams.map((team) => {
-                  const hasSubmitted = submissions.some(s => s.teamId === team.teamId);
                   const teamRound = team.round ?? 1;
+                  const leaderPaidRound1 = (team.members.find(m => m.userId === team.leaderId)?.paidRounds ?? []).includes(1);
                   return (
                     <tr key={team.id} className="hover:bg-gray-50/50 cursor-pointer" onClick={() => navigate(`/admin/teams/${team.teamId}`)}>
                       <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
@@ -276,9 +270,9 @@ export default function AdminTeams() {
                       </td>
                       <td className="px-5 py-4">
                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                            hasSubmitted ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200'
+                            leaderPaidRound1 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'
                           }`}>
-                            {hasSubmitted ? "Submitted" : "Pending"}
+                            {leaderPaidRound1 ? "Paid ₹100" : "Unpaid"}
                           </span>
                       </td>
                       <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>

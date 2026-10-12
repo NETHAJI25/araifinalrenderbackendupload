@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Users, Copy, Check, Plus, LogIn, UserCheck,
-  AlertCircle, Crown, CheckCircle, Clock, CreditCard, ChevronRight
+  AlertCircle, Crown, CheckCircle, Clock, CreditCard, ChevronRight, ExternalLink
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
@@ -206,7 +206,7 @@ export default function TeamPage() {
       const confirmed = await teamService.confirmTeam(team.teamId);
       setTeam(confirmed);
       setConfirmOpen(false);
-      addToast({ type: "success", title: "Team confirmed!", message: "Submission is now unlocked." });
+      addToast({ type: "success", title: "Team confirmed!", message: "Your team is confirmed for the Finals." });
     } catch (e: unknown) {
       addToast({ type: "error", title: "Confirmation failed", message: e instanceof Error ? e.message : "Try again." });
     } finally { setActionLoading(false); }
@@ -427,13 +427,35 @@ export default function TeamPage() {
                   )}
 
                   {leaderPaidRound1 && (
-                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl border border-green-200 mb-3">
-                      <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                      <p className="text-sm font-semibold text-green-800">Team Leader payment complete (₹{round1Fee}). Awaiting Round 1 results.</p>
+                    <div className="p-4 bg-green-50 rounded-xl border border-green-200 mb-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                        <p className="text-sm font-semibold text-green-800">Team Leader payment complete (₹{round1Fee}).</p>
+                      </div>
+                      {isLeader ? (
+                        <>
+                          <p className="text-sm text-green-700 mt-2">
+                            Now submit your project for Round 1 evaluation using the official form.
+                          </p>
+                          <a
+                            href={eventConfig.submissionUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-3 inline-flex items-center gap-2 btn-primary px-4 py-2 rounded-lg text-sm font-semibold"
+                            data-testid="round1-submission-form-link"
+                          >
+                            <ExternalLink className="w-4 h-4" /> Open Round 1 Submission Form
+                          </a>
+                        </>
+                      ) : (
+                        <p className="text-sm text-green-700 mt-2">
+                          The Team Leader will submit the project for Round 1 evaluation.
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {!isLeader && (
+                  {!isLeader && !leaderPaidRound1 && (
                     <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl border border-blue-200 mb-3">
                       <span className="w-4 h-4 text-blue-500 shrink-0">ℹ️</span>
                       <p className="text-sm text-blue-800">Wait for Team Leader to pay ₹{round1Fee} and submit PPT for Round 1.</p>
@@ -444,7 +466,7 @@ export default function TeamPage() {
                 // Round 2: All members pay ₹200
                 <>
                   <p className="text-sm text-gray-600 mb-4">
-                    <strong>Round 2 (Finals):</strong> Each team member must pay <strong>₹{round2Fee}</strong> individually. All members must complete payment before submission can be unlocked.
+                    <strong>Round 2 (Finals):</strong> Each team member must pay <strong>₹{round2Fee}</strong> individually. All members must complete payment before the team can be confirmed for the Finals.
                   </p>
 
                   <div className="flex items-center justify-between mb-4 p-3 bg-white rounded-xl border border-gray-100">
@@ -498,9 +520,9 @@ export default function TeamPage() {
                   <CheckCircle className="w-5 h-5 text-green-500" />
                   <div>
                     <p className="text-sm font-bold text-green-800">Team Confirmed</p>
-                    <p className="text-xs text-green-600">Submission is unlocked. Proceed to the Submission page.</p>
-                    <Link to="/dashboard/submission" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-green-700 hover:underline">
-                      Go to Submission <ChevronRight className="w-3 h-3" />
+                    <p className="text-xs text-green-600">Your team is confirmed for the Finals. Watch the Announcements page for final round details.</p>
+                    <Link to="/dashboard/announcements" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-green-700 hover:underline">
+                      View Announcements <ChevronRight className="w-3 h-3" />
                     </Link>
                   </div>
                 </div>
@@ -538,7 +560,7 @@ export default function TeamPage() {
               </p>
             </div>
           )}
-          {!isLeader && team && teamIsComplete && team.confirmationStatus !== "confirmed" && (
+          {!isLeader && team && isRound2 && teamIsComplete && team.confirmationStatus !== "confirmed" && (
             <div className="card p-5 bg-gray-50 border-gray-200">
               <p className="text-sm text-gray-600 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-400 shrink-0" />
@@ -583,7 +605,7 @@ export default function TeamPage() {
       <ConfirmDialog
         isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} onConfirm={handleConfirmTeam}
         title="Confirm Your Team"
-        message="Once confirmed, your team is finalized and submission will be unlocked for the Team Leader. Are you ready?"
+        message="Once confirmed, your team is finalized for the Finals. Are you ready?"
         confirmLabel="Confirm Team" loading={actionLoading}
       />
 

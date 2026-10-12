@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle, AlertCircle, ExternalLink, FileText, Lock, Users, CreditCard } from "lucide-react";
+import { CheckCircle, AlertCircle, ExternalLink, FileText, Lock, Users, CreditCard, Trophy } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { teamService } from "../../services/teamService";
 import { documents } from "../../data/documents";
@@ -22,22 +22,21 @@ export default function SubmissionPage() {
   const isLeader = team?.leaderId === user.id;
   const memberCount = team?.members.length ?? 0;
   const isRound2 = team?.round === 2;
-  const round2Fee = eventConfig.registrationFee; // 200
-  
-  // Round 2: All members must pay ₹200
-  const allPaidRound2 = isRound2 && (team?.members ?? []).every((m) => m.paymentStatus === "paid" || m.paymentStatus === "verified");
-  const paidCount = (team?.members ?? []).filter((m) => m.paymentStatus === "paid" || m.paymentStatus === "verified").length;
-  const isConfirmed = team?.confirmationStatus === "confirmed";
+  const round1Fee = 100; // Round 1 leader fee
+  const teamIsComplete = team?.status === "complete" || team?.confirmationStatus === "confirmed";
+  const hasValidSize = memberCount >= eventConfig.teamMin && memberCount <= eventConfig.teamMax;
 
-  // Eligibility = Round 2 + team exists + 4–6 members + all paid (₹200) + leader confirmed
-  const isEligible = !!team && isRound2 && memberCount >= eventConfig.teamMin && memberCount <= eventConfig.teamMax && allPaidRound2 && isConfirmed;
+  // Round 1 submission is unlocked once the Team Leader has paid the ₹100 fee.
+  const leaderPaidRound1 = (team?.members.find((m) => m.userId === team?.leaderId)?.paidRounds ?? []).includes(1);
+  const canSubmit = !!team && !isRound2 && teamIsComplete && leaderPaidRound1;
+
+  const paidCount = (team?.members ?? []).filter((m) => (m.paidRounds ?? []).includes(isRound2 ? 2 : 1)).length;
 
   const checks = [
     { check: !!team, label: "Team created", detail: team ? team.teamName : "No team found" },
-    { check: memberCount >= eventConfig.teamMin, label: `Minimum ${eventConfig.teamMin} members`, detail: `${memberCount} member(s)` },
-    { check: isRound2, label: "Round 1 Qualified", detail: isRound2 ? "Selected for Finals" : "Pending Round 1 results" },
-    { check: allPaidRound2, label: `All members paid ₹${round2Fee}`, detail: `${paidCount} / ${memberCount} paid` },
-    { check: isConfirmed, label: "Team confirmed by leader", detail: isConfirmed ? "Confirmed" : "Pending confirmation" },
+    { check: hasValidSize, label: `Team size ${eventConfig.teamMin}–${eventConfig.teamMax} members`, detail: `${memberCount} member(s)` },
+    { check: teamIsComplete, label: "Team marked complete", detail: teamIsComplete ? "Complete" : "Ask your Team Leader to complete the team" },
+    { check: leaderPaidRound1, label: `Leader paid ₹${round1Fee} (Round 1)`, detail: leaderPaidRound1 ? "Paid — form unlocked" : "Pending" },
   ];
 
   return (
@@ -45,10 +44,12 @@ export default function SubmissionPage() {
       <title>{`Submission | ${eventConfig.hackathonName}`}</title>
 
       <div className="mb-8">
-        <p className="text-violet-700 text-xs font-bold tracking-widest uppercase mb-1">Final Submission</p>
+        <p className="text-violet-700 text-xs font-bold tracking-widest uppercase mb-1">
+          {isRound2 ? "Round 2 · Finals" : "Round 1 Submission"}
+        </p>
         <h1 className="text-2xl font-black text-gray-900">Project Submission</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Only the Team Leader can submit the final project form.
+          Only the Team Leader can submit the Round 1 project form.
         </p>
       </div>
 
@@ -59,7 +60,7 @@ export default function SubmissionPage() {
       ) : (
         <div className="space-y-6">
 
-          {/* Eligibility checklist */}
+          {/* Requirements checklist */}
           <div className="card p-6">
             <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-violet-600" /> Submission Requirements
@@ -90,7 +91,9 @@ export default function SubmissionPage() {
                   { label: "Problem Statement", value: team.problemStatementTitle || "Not selected" },
                   { label: "Team Leader", value: team.members.find((m) => m.userId === team.leaderId)?.name || "—" },
                   { label: "Team Size", value: `${memberCount} / ${eventConfig.teamMax} members` },
-                  { label: "Payment", value: `${paidCount} / ${memberCount} paid` },
+                  isRound2
+                    ? { label: "Round 2 Payments", value: `${paidCount} / ${memberCount} paid` }
+                    : { label: "Round 1 Fee", value: leaderPaidRound1 ? "Paid ✓" : "Pending" },
                 ].map(({ label, value, mono }) => (
                   <div key={label} className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
@@ -134,11 +137,12 @@ export default function SubmissionPage() {
             <h2 className="text-base font-bold text-gray-900 mb-4">Submission Instructions</h2>
             <ul className="space-y-2.5 text-sm text-gray-600">
               {[
-                "Final submission must be completed through the official submission form.",
-                "Only the Team Leader should submit the team's final response.",
+                "Round 1 submission is completed through the official submission form linked below.",
+                "Only the Team Leader should submit the team's response.",
                 "Ensure the Team ID and team details match the information registered on this platform.",
                 "Use the official PPT format template for your presentation.",
                 "Submissions after the deadline will not be accepted.",
+                "Teams selected in Round 1 advance to Round 2 (Finals).",
               ].map((inst, i) => (
                 <li key={i} className="flex items-start gap-2.5">
                   <span className="w-5 h-5 bg-violet-100 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-violet-700 text-xs font-bold">{i + 1}</span>
@@ -149,17 +153,62 @@ export default function SubmissionPage() {
           </div>
 
           {/* Submission CTA */}
-          <div className={`card p-6 ${isEligible ? "border-green-200 bg-green-50/30" : "border-gray-200"}`}>
-            <h2 className="text-base font-bold text-gray-900 mb-3">Final Submission Form</h2>
+          <div className={`card p-6 ${canSubmit ? "border-green-200 bg-green-50/30" : isRound2 ? "border-green-200 bg-green-50/30" : "border-gray-200"}`}>
+            <h2 className="text-base font-bold text-gray-900 mb-3">
+              {isRound2 ? "Round 2 (Finals)" : "Round 1 Submission Form"}
+            </h2>
 
-            {!isEligible ? (
+            {isRound2 ? (
+              /* Round 2 is the offline finals — no online submission required */
+              <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+                <p className="text-sm font-bold text-green-800 flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-green-600 shrink-0" /> Your team advanced to Round 2 (Finals)!
+                </p>
+                <p className="text-sm text-green-700 mt-1">
+                  Round 1 project submission is now closed. Round 2 is the offline final round — no further
+                  online submission is needed here. Watch the Announcements page for finals details.
+                </p>
+              </div>
+            ) : canSubmit ? (
+              isLeader ? (
+                <div>
+                  <div className="flex items-center gap-3 mb-5 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-green-800">Your team can submit the Round 1 project.</p>
+                      <p className="text-xs text-green-600 mt-0.5">Payment received — the submission form is unlocked.</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    As the Team Leader, open the official submission form to add your project details.
+                  </p>
+                  <a
+                    href={eventConfig.submissionUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-lg text-sm font-semibold"
+                    data-testid="submission-form-link"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Open Submission Form
+                  </a>
+                </div>
+              ) : (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <p className="text-sm font-semibold text-blue-800 mb-1">Submission available to your team.</p>
+                  <p className="text-sm text-blue-700">
+                    Only the Team Leader can open the submission form. Contact your Team Leader — <strong>{team?.members.find((m) => m.userId === team.leaderId)?.name}</strong> — to submit the project.
+                  </p>
+                </div>
+              )
+            ) : (
               <div>
                 <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200 mb-4">
                   <Lock className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-bold text-gray-700">Submission Access Locked</p>
                     <p className="text-sm text-gray-500 mt-1">
-                      Complete your team and wait for the Team Leader to confirm the team.
+                      The Team Leader must complete the team and pay the ₹{round1Fee} Round 1 fee to unlock the submission form.
                     </p>
                   </div>
                 </div>
@@ -170,51 +219,18 @@ export default function SubmissionPage() {
                     </Button>
                   </Link>
                 )}
-                {team && !isRound2 && (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-4">
-                    <p className="text-sm font-semibold text-amber-800 mb-1">Round 1: PPT Submitted</p>
-                    <p className="text-sm text-amber-700">Waiting for Round 1 evaluation results. If selected, team will advance to Round 2 (Finals) where all members pay ₹200 each.</p>
-                  </div>
-                )}
-                {team && isRound2 && !allPaidRound2 && (
+                {team && isLeader && (
                   <Link to="/dashboard/team">
                     <Button variant="secondary" size="md" leftIcon={<CreditCard className="w-4 h-4" />}>
-                      Complete Payment (₹{round2Fee} each)
+                      Complete Payment (₹{round1Fee}) on My Team
                     </Button>
                   </Link>
                 )}
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center gap-3 mb-5 p-4 bg-green-50 border border-green-200 rounded-xl">
-                  <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
-                  <div>
-                    <p className="text-sm font-bold text-green-800">Your team is eligible to submit.</p>
-                    <p className="text-xs text-green-600 mt-0.5">All requirements have been met.</p>
-                  </div>
-                </div>
-
-                {isLeader ? (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      As the Team Leader, you can now open the official submission form.
-                    </p>
-                    <a
-                      href={eventConfig.submissionUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 btn-primary px-6 py-3 rounded-lg text-sm font-semibold"
-                      data-testid="submission-form-link"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Open Submission Form
-                    </a>
-                  </div>
-                ) : (
+                {team && !isLeader && (
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                    <p className="text-sm font-semibold text-blue-800 mb-1">Submission available to your team.</p>
+                    <p className="text-sm font-semibold text-blue-800 mb-1">Waiting for your Team Leader.</p>
                     <p className="text-sm text-blue-700">
-                      The Team Leader must complete the final submission. Contact your Team Leader — <strong>{team?.members.find((m) => m.userId === team.leaderId)?.name}</strong> — to submit the project.
+                      The Team Leader pays ₹{round1Fee} and submits the project for Round 1 evaluation.
                     </p>
                   </div>
                 )}

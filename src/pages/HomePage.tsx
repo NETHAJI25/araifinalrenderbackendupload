@@ -270,7 +270,7 @@ function HowItWorksSection() {
     { num: "05", icon: <FileText className="w-6 h-6" />, title: "Round 1: PPT Submit", desc: "Team Leader pays ₹100 & submits PPT for evaluation." },
     { num: "06", icon: <CheckCircle className="w-6 h-6" />, title: "Round 1 Results", desc: "Selected teams advance to Finals (Round 2)." },
     { num: "07", icon: <CreditCard className="w-6 h-6" />, title: "Round 2: Payment", desc: "All members pay ₹200 each for Finals." },
-    { num: "08", icon: <Send className="w-6 h-6" />, title: "Final Submission", desc: "Team Leader submits final project form." },
+    { num: "08", icon: <Send className="w-6 h-6" />, title: "Grand Finale", desc: "Confirmed teams present their project at the offline finals." },
   ];
   return (
     <section className="py-20 bg-gray-50">

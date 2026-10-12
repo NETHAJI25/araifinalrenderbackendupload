@@ -3,9 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Users, ShieldAlert, CheckCircle, XCircle, ArrowUpRight } from "lucide-react";
 import { teamService } from "../../services/teamService";
-import { submissionService } from "../../services/submissionService";
 import { mockUsers } from "../../data/mockUsers";
-import type { Team, Submission } from "../../types";
+import type { Team } from "../../types";
 import { Button } from "../../components/ui/Button";
 import { useToast } from "../../contexts/ToastContext";
 
@@ -14,7 +13,6 @@ export default function AdminTeamDetails() {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [team, setTeam] = useState<Team | null>(null);
-  const [submission, setSubmission] = useState<Submission | null>(null);
   const [loading, setLoading] = useState(true);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
@@ -27,7 +25,7 @@ export default function AdminTeamDetails() {
   const isRound2 = team?.round === 2;
   const leaderPaid = (() => {
     const leader = team?.members.find((m) => m.userId === team?.leaderId);
-    return leader?.paymentStatus === "paid" || leader?.paymentStatus === "verified";
+    return (leader?.paidRounds ?? []).includes(1);
   })();
   const canPromote = isRound1 && leaderPaid && team?.confirmationStatus !== "confirmed";
   const canDemote = isRound2;
@@ -64,12 +62,8 @@ export default function AdminTeamDetails() {
     async function loadTeam() {
       if (!teamId) return;
       try {
-        const [data, submissions] = await Promise.all([
-           teamService.getTeam(teamId),
-           submissionService.getAll()
-        ]);
+        const data = await teamService.getTeam(teamId);
         setTeam(data);
-        setSubmission(submissions.find(s => s.teamId === teamId) || null);
       } catch {
         addToast({ type: "error", title: "Failed to load team" });
       } finally {
@@ -208,9 +202,9 @@ export default function AdminTeamDetails() {
                 </span>
               </div>
               <div className="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
-                <span className="text-gray-600">Submission</span>
-                <span className={`font-semibold flex items-center gap-1 ${submission ? "text-blue-600" : "text-gray-500"}`}>
-                  {submission ? submission.status : "Pending"}
+                <span className="text-gray-600">Round 1 Fee</span>
+                <span className={`font-semibold flex items-center gap-1 ${leaderPaid ? "text-green-600" : "text-gray-500"}`}>
+                  {leaderPaid ? "Paid ₹100" : "Pending"}
                 </span>
               </div>
               <div className="flex justify-between items-center text-sm">

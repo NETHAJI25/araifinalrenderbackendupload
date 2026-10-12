@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Users, UsersIcon, CheckCircle, Clock, AlertTriangle, UserCheck, XCircle, FileText } from "lucide-react";
+import { Users, UsersIcon, CheckCircle, Clock, AlertTriangle, UserCheck, XCircle, CreditCard } from "lucide-react";
 import { teamService } from "../../services/teamService";
-import { submissionService } from "../../services/submissionService";
 import type { Team } from "../../types";
 
 export default function AdminHome() {
@@ -14,7 +13,7 @@ export default function AdminHome() {
     rejectedTeams: 0,
     paidParticipants: 0,
     pendingPayments: 0,
-    submissionsReceived: 0,
+    round1FeePaid: 0,
   });
   const [recentTeams, setRecentTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,17 +21,17 @@ export default function AdminHome() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [teams, submissions] = await Promise.all([
-          teamService.getAll(),
-          submissionService.getAll()
-        ]);
+        const teams = await teamService.getAll();
         
         let participantsCount = 0;
         let pendingCount = 0;
         let paidCount = 0;
+        let round1PaidCount = 0;
         
         teams.forEach(team => {
           participantsCount += team.members.length;
+          const leader = team.members.find(m => m.userId === team.leaderId);
+          if ((leader?.paidRounds ?? []).includes(1)) round1PaidCount++;
           team.members.forEach(m => {
             if (m.paymentStatus === 'pending') pendingCount++;
             if (m.paymentStatus === 'paid' || m.paymentStatus === 'verified') paidCount++;
@@ -47,7 +46,7 @@ export default function AdminHome() {
           rejectedTeams: teams.filter(t => t.status === 'rejected').length,
           paidParticipants: paidCount,
           pendingPayments: pendingCount,
-          submissionsReceived: submissions.length,
+          round1FeePaid: round1PaidCount,
         });
 
         setRecentTeams(
@@ -70,7 +69,7 @@ export default function AdminHome() {
     { label: "Rejected Teams", value: stats.rejectedTeams, icon: <XCircle className="w-5 h-5 text-red-600" />, bg: "bg-red-50" },
     { label: "Paid Participants", value: stats.paidParticipants, icon: <UserCheck className="w-5 h-5 text-teal-600" />, bg: "bg-teal-50" },
     { label: "Pending Payments", value: stats.pendingPayments, icon: <AlertTriangle className="w-5 h-5 text-orange-600" />, bg: "bg-orange-50" },
-    { label: "Submissions Received", value: stats.submissionsReceived, icon: <FileText className="w-5 h-5 text-indigo-600" />, bg: "bg-indigo-50" },
+    { label: "Round 1 Fee Paid", value: stats.round1FeePaid, icon: <CreditCard className="w-5 h-5 text-indigo-600" />, bg: "bg-indigo-50" },
   ];
 
   if (isLoading) {
