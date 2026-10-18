@@ -214,6 +214,27 @@ export const authService = {
     return updated;
   },
 
+  // Persist profile changes to the backend and refresh the local session.
+  async updateProfile(updates: Partial<User>): Promise<User> {
+    const token = getToken();
+    const res = await fetchWithRetry(`${API_URL}/api/auth/update`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(updates),
+    });
+    const data = await parseBody(res);
+    if (!res.ok) {
+      throw new Error(data?.message || `Couldn't save your profile (${res.status}). Please try again.`);
+    }
+    const payload = data!.data as User;
+    const updatedUser = { ...payload, role: getUserRole(payload.email) };
+    saveSession(updatedUser);
+    return updatedUser;
+  },
+
   async getAllUsers(): Promise<User[]> {
     const token = localStorage.getItem(TOKEN_KEY);
     const res = await fetch(`${API_URL}/api/auth/users`, {

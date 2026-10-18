@@ -53,12 +53,25 @@ export default function ProfilePage() {
 
   async function onSave(data: FormData) {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 700));
-    authService.updateCurrentUser({ ...data, profileCompleted: pct === 100 });
-    refreshUser();
-    setSaving(false);
-    setEditing(false);
-    addToast({ type: "success", title: "Profile updated" });
+    try {
+      // Completion should reflect the values being saved, not the stale ones.
+      const merged = { ...user!, ...data };
+      await authService.updateProfile({
+        ...data,
+        profileCompleted: profileCompletionPercent(merged) === 100,
+      });
+      refreshUser();
+      setEditing(false);
+      addToast({ type: "success", title: "Profile updated", message: "Your changes have been saved." });
+    } catch (err) {
+      addToast({
+        type: "error",
+        title: "Couldn't save profile",
+        message: err instanceof Error ? err.message : "Please try again.",
+      });
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -135,7 +148,7 @@ export default function ProfilePage() {
                 {[
                   { label: "Team ID", value: user.teamId || "Not in a team", mono: true },
                   { label: "Payment Status", value: user.paymentStatus === "paid" ? "Paid" : "Pending" },
-                  { label: "Registration Date", value: new Date(user.createdAt).toLocaleDateString("en-IN") },
+                  { label: "Registration Date", value: user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-IN") : "—" },
                 ].map(({ label, value, mono }) => (
                   <div key={label} className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</p>

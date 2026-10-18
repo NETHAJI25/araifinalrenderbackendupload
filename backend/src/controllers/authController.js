@@ -5,6 +5,41 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 
+// Map a `users` table row (snake_case) to the camelCase shape the frontend expects.
+// Keeping this in one place avoids the previous bug where login/register returned
+// only a partial, snake_case user and the UI lost city/state/course/teamId.
+function formatUser(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    college: user.college,
+    course: user.course,
+    year: user.year,
+    city: user.city,
+    state: user.state,
+    country: user.country,
+    linkedin: user.linkedin,
+    github: user.github,
+    // Self-heal: the stored flag can be stale (e.g. older rows saved before all
+    // fields were persisted). Treat a row as complete when its fields are filled.
+    profileCompleted: user.profile_completed === true || isProfileComplete(user),
+    paymentStatus: user.payment_status,
+    teamId: user.team_id,
+    role: user.role,
+    createdAt: user.created_at,
+  };
+}
+
+// Must match `profileCompletionPercent` on the frontend (name, phone, college,
+// course, year, city, state).
+const REQUIRED_PROFILE_FIELDS = ['name', 'phone', 'college', 'course', 'year', 'city', 'state'];
+function isProfileComplete(row) {
+  return REQUIRED_PROFILE_FIELDS.every((field) => row[field] && String(row[field]).trim().length > 0);
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
@@ -44,7 +79,10 @@ function readOtp(key) {
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, phone, college, password, acceptTerms } = req.body;
+    const {
+      name, email, phone, college, password, acceptTerms,
+      course, year, city, state, country, linkedin, github,
+    } = req.body;
 
     if (!name || !email || !phone || !college || !password) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
@@ -82,10 +120,17 @@ exports.register = async (req, res) => {
         email,
         phone,
         college,
+        course: course || null,
+        year: year || null,
+        city: city || null,
+        state: state || null,
+        country: country || 'India',
+        linkedin: linkedin || null,
+        github: github || null,
         password: hashedPassword,
         role: 'team_leader',
-        payment_status: 'unpaid',
-        profile_completed: false
+        payment_status: 'pending',
+        profile_completed: isProfileComplete({ name, phone, college, course, year, city, state })
       })
       .select()
       .single();
@@ -98,15 +143,7 @@ exports.register = async (req, res) => {
       success: true,
       message: 'User registered successfully',
       data: {
-        user: {
-          id: insertedUser.id,
-          name: insertedUser.name,
-          email: insertedUser.email,
-          phone: insertedUser.phone,
-          college: insertedUser.college,
-          payment_status: insertedUser.payment_status,
-          profile_completed: insertedUser.profile_completed
-        },
+        user: formatUser(insertedUser),
         token
       }
     });
@@ -145,16 +182,7 @@ exports.login = async (req, res) => {
       success: true,
       message: 'Login successful',
       data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          college: user.college,
-          team_id: user.team_id,
-          payment_status: user.payment_status,
-          profile_completed: user.profile_completed
-        },
+        user: formatUser(user),
         token
       }
     });
@@ -187,16 +215,7 @@ exports.getCurrentUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        college: user.college,
-        team_id: user.team_id,
-        payment_status: user.payment_status,
-        profile_completed: user.profile_completed
-      }
+      data: formatUser(user)
     });
   } catch (error) {
     console.error('Get current user error:', error);
@@ -207,13 +226,35 @@ exports.getCurrentUser = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { name, phone, college, profileCompleted } = req.body;
+    const {
+      name, phone, college, course, year, city, state, country,
+      linkedin, github,
+    } = req.body;
 
     const updateData = {};
-    if (name) updateData.name = name;
-    if (phone) updateData.phone = phone;
-    if (college) updateData.college = college;
-    if (profileCompleted !== undefined) updateData.profile_completed = profileCompleted;
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    if (college !== undefined) updateData.college = college;
+    if (course !== undefined) updateData.course = course;
+    if (year !== undefined) updateData.year = year;
+    if (city !== undefined) updateData.city = city;
+    if (state !== undefined) updateData.state = state;
+    if (country !== undefined) updateData.country = country;
+    if (linkedin !== undefined) updateData.linkedin = linkedin;
+    if (github !== undefined) updateData.github = github;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+
+    // Derive completion from the merged row so the stored flag can never drift.
+    const { data: current, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (fetchError) throw new Error(fetchError.message);
+    updateData.profile_completed = isProfileComplete({ ...current, ...updateData });
 
     const { data: updated, error } = await supabase
       .from('users')
@@ -227,15 +268,7 @@ exports.updateProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      data: {
-        id: updated.id,
-        name: updated.name,
-        email: updated.email,
-        phone: updated.phone,
-        college: updated.college,
-        payment_status: updated.payment_status,
-        profile_completed: updated.profile_completed
-      }
+      data: formatUser(updated)
     });
   } catch (error) {
     console.error('Update profile error:', error);
@@ -388,11 +421,11 @@ exports.getAllUsers = async (req, res) => {
   try {
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, name, email, phone, college, payment_status, profile_completed, team_id, created_at');
+      .select('id, name, email, phone, college, course, year, city, state, country, linkedin, github, role, payment_status, profile_completed, team_id, created_at');
 
     if (error) throw new Error(error.message);
 
-    res.status(200).json({ success: true, data: users });
+    res.status(200).json({ success: true, data: users.map(formatUser) });
   } catch (error) {
     console.error('Get all users error:', error);
     res.status(500).json({ success: false, message: error.message || 'Server error' });

@@ -42,7 +42,7 @@ export default function DashboardHome() {
   const profilePct = profileCompletionPercent(user);
   const profileDone = profilePct === 100;
   const isPaid = user.paymentStatus === "paid" || user.paymentStatus === "verified";
-  const hasTeam = !!user.teamId;
+  const hasTeam = !!user.teamId || !!team;
   const teamComplete = team?.status === "complete" || team?.confirmationStatus === "confirmed";
   
   // Round-based logic
@@ -111,7 +111,7 @@ export default function DashboardHome() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: "Profile", icon: <CheckCircle className="w-5 h-5" />, value: `${profilePct}%`, sub: "Complete", color: profileDone ? "text-green-600 bg-green-50" : "text-amber-600 bg-amber-50", href: "/dashboard/profile" },
-          { label: "Team", icon: <Users className="w-5 h-5" />, value: hasTeam ? user.teamId! : "No Team", sub: hasTeam ? "Joined" : "Not joined", color: hasTeam ? "text-violet-700 bg-violet-50" : "text-gray-500 bg-gray-50", href: "/dashboard/team", mono: hasTeam },
+          { label: "Team", icon: <Users className="w-5 h-5" />, value: hasTeam ? (user.teamId || team?.teamId || "Team") : "No Team", sub: hasTeam ? "Joined" : "Not joined", color: hasTeam ? "text-violet-700 bg-violet-50" : "text-gray-500 bg-gray-50", href: "/dashboard/team", mono: hasTeam },
           { label: "Payment", icon: <CreditCard className="w-5 h-5" />, value: payDisplay.value, sub: payDisplay.sub, color: payDisplay.color, href: "/dashboard/team" },
           { label: "Submission", icon: <Send className="w-5 h-5" />, value: isRound1 ? (leaderPaidRound1 ? "Open" : "Locked") : "Closed", sub: isRound1 ? (leaderPaidRound1 ? (team?.leaderId === user.id ? "Submit your project" : "Leader submits") : `Leader must pay ₹${round1Fee}`) : "Advanced to Finals", color: isRound1 ? (leaderPaidRound1 ? "text-green-600 bg-green-50" : "text-gray-500 bg-gray-50") : "text-violet-700 bg-violet-50", href: "/dashboard/submission" },
         ].map((card) => (
