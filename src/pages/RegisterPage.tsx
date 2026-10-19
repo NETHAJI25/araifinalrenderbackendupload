@@ -138,7 +138,7 @@ export default function RegisterPage() {
             ))}
           </div>
 
-          <div className="card p-8 shadow-lg">
+          <div className="card p-6 sm:p-8 shadow-lg">
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
               {/* Step 0 */}
               {step === 0 && (

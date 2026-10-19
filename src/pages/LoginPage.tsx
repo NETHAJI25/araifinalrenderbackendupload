@@ -138,7 +138,7 @@ export default function LoginPage() {
       />
       <div className="min-h-[calc(100vh-4rem)] bg-gray-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="card p-8 shadow-lg">
+          <div className="card p-6 sm:p-8 shadow-lg">
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
                 <IALogoMark size={48} />
@@ -268,7 +268,7 @@ export default function LoginPage() {
               value={forgotConfirm}
               onChange={(e) => setForgotConfirm(e.target.value)}
             />
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
               <button
                 type="button"
                 onClick={() => { setForgotStep("phone"); setForgotOtp(""); }}

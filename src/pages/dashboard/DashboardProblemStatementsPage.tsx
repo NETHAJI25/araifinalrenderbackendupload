@@ -123,12 +123,12 @@ export default function DashboardProblemStatementsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-between mt-4">
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
             <ChevronLeft className="w-4 h-4" /> Previous
           </button>
-          <div className="flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1">
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let p: number;
               if (totalPages <= 5) p = i + 1;

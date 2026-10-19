@@ -400,7 +400,7 @@ export default function TeamPage() {
                     </p>
                   </div>
                   
-                  <div className="flex items-center justify-between mb-4 p-3 bg-white rounded-xl border border-gray-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 p-3 bg-white rounded-xl border border-gray-100">
                     <div>
                       <p className="text-xs font-semibold text-gray-400 uppercase">Round 1 Status</p>
                       <p className="text-lg font-black text-gray-900 mt-0.5">
@@ -415,7 +415,7 @@ export default function TeamPage() {
                   </div>
 
                   {isLeader && !leaderPaidRound1 && (
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-amber-200 mb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-xl border border-amber-200 mb-3">
                       <div>
                         <p className="text-sm font-semibold text-gray-900">Your Payment (Team Leader)</p>
                         <p className="text-xs text-amber-700">₹{round1Fee} — Pending (PPT Submission)</p>
@@ -470,7 +470,7 @@ export default function TeamPage() {
                     <strong>Round 2 (Finals):</strong> Each team member must pay <strong>₹{round2Fee}</strong> individually. All members must complete payment before the team can be confirmed for the Finals.
                   </p>
 
-                  <div className="flex items-center justify-between mb-4 p-3 bg-white rounded-xl border border-gray-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 p-3 bg-white rounded-xl border border-gray-100">
                     <div>
                       <p className="text-xs font-semibold text-gray-400 uppercase">Team Payment Progress</p>
                       <p className="text-lg font-black text-gray-900 mt-0.5">{paidCount} / {memberCount} Paid</p>
@@ -483,7 +483,7 @@ export default function TeamPage() {
                   </div>
 
                   {!hasPaidThisRound && canPayRound2 && (
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-amber-200 mb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-xl border border-amber-200 mb-3">
                       <div>
                         <p className="text-sm font-semibold text-gray-900">Your Payment</p>
                         <p className="text-xs text-amber-700">₹{round2Fee} — Pending</p>

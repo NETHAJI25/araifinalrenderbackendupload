@@ -95,6 +95,7 @@ export default function ProblemStatementsPage() {
         </div>
 
         {/* SIH-style table */}
+        <p className="sm:hidden text-xs text-gray-400 mb-2 text-center">Swipe the table sideways to see all columns →</p>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -151,12 +152,12 @@ export default function ProblemStatementsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-between mt-4">
             <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}
               className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
               <ChevronLeft className="w-4 h-4" /> Previous
             </button>
-            <div className="flex items-center gap-1">
+            <div className="hidden sm:flex items-center gap-1">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let p: number;
                 if (totalPages <= 5) p = i + 1;

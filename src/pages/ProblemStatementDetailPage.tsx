@@ -93,7 +93,7 @@ export default function ProblemStatementDetailPage() {
 
             <div className="card p-6">
               <h2 className="text-base font-bold text-gray-900 mb-4">Problem Information</h2>
-              <dl className="grid grid-cols-2 gap-4">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { label: "PS Number", value: ps.localPsNumber },
                   { label: "Category", value: ps.category },

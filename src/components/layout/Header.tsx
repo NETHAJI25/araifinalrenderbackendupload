@@ -235,7 +235,7 @@ export function Header() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="lg:hidden border-t border-gray-100 bg-white overflow-hidden"
+            className="lg:hidden border-t border-gray-100 bg-white overflow-hidden max-h-[calc(100dvh-4rem)] overflow-y-auto"
           >
             <nav className="px-4 py-3 space-y-1" aria-label="Mobile navigation">
               {publicNav.map((item) => (

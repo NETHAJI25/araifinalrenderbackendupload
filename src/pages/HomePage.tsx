@@ -77,7 +77,7 @@ function HeroSection() {
               initial={{ opacity: 0, y: reduced ? 0 : 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.08 }}
-              className="text-5xl sm:text-6xl lg:text-7xl font-black text-gray-900 leading-tight mb-6"
+              className="text-4xl sm:text-5xl lg:text-7xl font-black text-gray-900 leading-tight mb-6"
             >
               <span className="sr-only">
                 {eventConfig.hackathonName} — national-level 36-hour student hackathon in{" "}
@@ -293,7 +293,7 @@ function HowItWorksSection() {
         <motion.div {...useFadeUp()} className="text-center mb-14">
           <SectionHeader eyebrow="How It Works" title="Your Journey to the Final Round" />
         </motion.div>
-        <div className="hidden md:grid md:grid-cols-8 gap-3">
+        <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-8 gap-4">
           {steps.map((s, i) => (
             <motion.div key={s.num} {...useFadeUp(i)} className="flex flex-col relative">
               {i < steps.length - 1 && (
@@ -454,7 +454,7 @@ function FAQSection() {
           {categories.map((cat) => (
             <button key={cat} role="tab" aria-selected={activeCategory === cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-violet-400
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-violet-400
                 ${activeCategory === cat ? "bg-violet-700 text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-700"}`}>
               {cat}
             </button>
@@ -547,7 +547,7 @@ function ContactSection() {
             </div>
           </div>
           
-          <div className="card p-8">
+          <div className="card p-6 sm:p-8">
             <h3 className="text-xl font-bold text-gray-900 mb-6 sm:text-left">Send us a message</h3>
             {isSent ? (
               <div className="bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 text-center font-medium">
