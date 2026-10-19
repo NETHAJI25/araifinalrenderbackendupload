@@ -45,7 +45,8 @@ export default function AdminAnnouncements() {
       loadAnnouncements();
     } catch (error) {
       console.error(error);
-      alert("Failed to save announcement");
+      const message = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed to save announcement: ${message}`);
     }
   }
 

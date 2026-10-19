@@ -2,16 +2,38 @@ const { v4: uuidv4 } = require('uuid');
 const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 
+// `announcements` table columns: id, title, content, priority, status,
+// created_at, updated_at. `status` is 'draft' | 'published', `priority` is
+// 'Normal' | 'Important' | 'Urgent' — matching the frontend Announcement type.
+const PRIORITIES = ['Normal', 'Important', 'Urgent'];
+const STATUSES = ['draft', 'published'];
+
 function formatAnnouncement(row) {
   if (!row) return null;
   return {
     id: row.id,
     title: row.title,
     content: row.content,
-    isPublished: row.is_published,
-    publishAt: row.publish_at instanceof Date ? row.publish_at.toISOString() : row.publish_at,
-    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
-    updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at
+    priority: PRIORITIES.includes(row.priority) ? row.priority : 'Normal',
+    status: row.status === 'draft' ? 'draft' : 'published',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+// Accept both the frontend payload ({ priority, status }) and the legacy
+// { isPublished } flag. Returns undefined for fields the caller didn't send,
+// so updates can fall back to the existing row values.
+function normalizeAnnouncementInput(body) {
+  let status;
+  if (STATUSES.includes(body.status)) status = body.status;
+  else if (typeof body.isPublished === 'boolean') status = body.isPublished ? 'published' : 'draft';
+
+  return {
+    title: body.title,
+    content: body.content,
+    priority: PRIORITIES.includes(body.priority) ? body.priority : undefined,
+    status
   };
 }
 
@@ -33,13 +55,11 @@ exports.getAll = async (req, res) => {
 
 exports.getPublished = async (req, res) => {
   try {
-    const now = new Date().toISOString();
     const { data: rows, error } = await supabase
       .from('announcements')
       .select('*')
-      .eq('is_published', true)
-      .lte('publish_at', now)
-      .order('publish_at', { ascending: false });
+      .eq('status', 'published')
+      .order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
 
     const announcements = rows.map(formatAnnouncement);
@@ -52,22 +72,22 @@ exports.getPublished = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { title, content, isPublished, publishAt } = req.body;
+    const { title, content, priority, status } = normalizeAnnouncementInput(req.body);
     if (!title || !content) {
       return res.status(400).json({ success: false, message: 'Title and content are required' });
     }
 
-    const announcementId = `ann_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    // The id column is uuid (NOT NULL, no DB default) — generate one server-side.
     const now = new Date().toISOString();
 
     const { data: inserted, error } = await supabase
       .from('announcements')
       .insert({
-        id: announcementId,
+        id: uuidv4(),
         title,
         content,
-        is_published: isPublished || false,
-        publish_at: publishAt || now,
+        priority: priority || 'Normal',
+        status: status || 'published',
         created_at: now,
         updated_at: now
       })
@@ -85,7 +105,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content, isPublished, publishAt } = req.body;
+    const { title, content, priority, status } = normalizeAnnouncementInput(req.body);
 
     const { data: existing, error: findError } = await supabase
       .from('announcements')
@@ -100,8 +120,8 @@ exports.update = async (req, res) => {
     const updateData = {
       title: title ?? existing.title,
       content: content ?? existing.content,
-      is_published: isPublished ?? existing.is_published,
-      publish_at: publishAt ?? existing.publish_at,
+      priority: priority ?? existing.priority ?? 'Normal',
+      status: status ?? existing.status ?? 'published',
       updated_at: new Date().toISOString()
     };
 
