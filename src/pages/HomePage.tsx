@@ -393,7 +393,8 @@ function OrganizersSection() {
             <motion.div key={org.id} {...useFadeUp(i)}
               className={`card p-6 flex flex-col items-center text-center hover:border-violet-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 w-full max-w-[340px] mx-auto min-h-[280px]${isOrphanLast ? " lg:col-start-2 lg:col-span-2" : ""}`}>
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-violet-100 mb-5 bg-gray-100 shadow-md">
-                <img src={org.photo} alt={`${org.name} — Innovators Arena 2.0 organiser`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                <img src={org.photo} alt={`${org.name} — Innovators Arena 2.0 organiser`} loading="lazy" decoding="async"
+                  className={`w-full h-full object-cover ${org.imagePosition === "top" ? "object-top" : org.imagePosition === "bottom" ? "object-bottom" : "object-center"}`} />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-1">{org.name}</h3>
               <p className="text-sm text-violet-600 font-semibold">{org.designation}</p>

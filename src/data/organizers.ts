@@ -11,6 +11,12 @@ export interface Organizer {
   designation: string;
   photo: string;
   linkedin: string;
+  /**
+   * Which part of the photo to keep when it is cropped to the circular
+   * avatar. Use "top" for photos where the head sits near the top edge,
+   * otherwise the head gets cropped off.
+   */
+  imagePosition?: "top" | "center" | "bottom";
 }
 
 export const organizers: Organizer[] = [
@@ -48,5 +54,7 @@ export const organizers: Organizer[] = [
     designation: "Secretary",
     photo: haresh,
     linkedin: "https://www.linkedin.com/in/haresh-kumar-n-l",
+    // Anchor the crop to the top so his head is fully visible.
+    imagePosition: "top",
   },
 ];
