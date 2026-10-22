@@ -31,6 +31,20 @@ function parseMeta(reference) {
   return {};
 }
 
+// Cashfree reports the payment method in two different shapes: the order API
+// returns a plain string ("upi"), while the webhook sends an object keyed by
+// method (e.g. { upi: { channel: "link", upi_id: "..." } }). Always reduce it to
+// a plain string so it can be stored and rendered safely.
+function normalizeMethod(method) {
+  if (!method) return null;
+  if (typeof method === 'string') return method;
+  if (typeof method === 'object') {
+    const keys = Object.keys(method);
+    return keys.length ? keys.join(', ') : null;
+  }
+  return String(method);
+}
+
 function publicPayment(row) {
   const meta = parseMeta(row.reference);
   return {
@@ -46,7 +60,7 @@ function publicPayment(row) {
     cfPaymentId: meta.cfPaymentId || null,
     round: meta.round ?? 1,
     teamId: meta.teamId || null,
-    method: meta.method || null,
+    method: normalizeMethod(meta.method),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -100,7 +114,7 @@ async function markPaymentPaid(payment, meta, cfPaymentId, method) {
   const updatedMeta = {
     ...meta,
     cfPaymentId: cfPaymentId || meta.cfPaymentId || null,
-    method: method || meta.method || null,
+    method: normalizeMethod(method) || normalizeMethod(meta.method) || null,
   };
   await supabase
     .from('payments')

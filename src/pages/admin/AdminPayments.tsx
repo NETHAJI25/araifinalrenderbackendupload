@@ -26,6 +26,18 @@ function formatCurrency(value: number) {
   return `₹${(value || 0).toLocaleString("en-IN")}`;
 }
 
+// Cashfree can report the method either as a string ("upi") or as an object
+// keyed by method ({ upi: { channel, upi_id } }). Never render a raw object —
+// React throws "Objects are not valid as a React child".
+function formatMethod(method: unknown): string {
+  if (typeof method === "string") return method || "—";
+  if (method && typeof method === "object") {
+    const keys = Object.keys(method as Record<string, unknown>);
+    return keys.length ? keys.join(", ") : "—";
+  }
+  return "—";
+}
+
 function formatDate(value?: string) {
   if (!value) return "—";
   const d = new Date(value);
@@ -219,7 +231,7 @@ export default function AdminPayments() {
                           <p className="font-mono text-[10px] text-gray-400 mt-0.5">cf: {p.cfOrderId}</p>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-gray-600 capitalize">{p.method || "—"}</td>
+                      <td className="px-5 py-4 text-gray-600 capitalize">{formatMethod(p.method)}</td>
                       <td className="px-5 py-4 text-gray-500 text-xs whitespace-nowrap">{formatDate(p.createdAt)}</td>
                     </tr>
                   ))
